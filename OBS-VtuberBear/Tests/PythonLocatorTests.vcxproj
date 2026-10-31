@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <!-- Tests for PythonLocator.cpp, the code that lets OBS-VtuberBear run on whichever Python 3 is installed. It is
+         compiled straight into this exe, built the way the plugin is: Python's stable ABI, python3.dll delay-loaded. Binding a
+         Python can only happen once per process, so every scenario runs in a child process, with its
+         own PATH and registry view; see PythonLocatorTests.cpp. Needs PYTHONPATH (BearApps.user.props, written by
+         scripts\setup-deps.ps1) only for a Python to test against. -->
+    <ItemGroup Label="ProjectConfigurations">
+        <ProjectConfiguration Include="Debug|x64">
+            <Configuration>Debug</Configuration>
+            <Platform>x64</Platform>
+        </ProjectConfiguration>
+        <ProjectConfiguration Include="Release|x64">
+            <Configuration>Release</Configuration>
+            <Platform>x64</Platform>
+        </ProjectConfiguration>
+    </ItemGroup>
+    <PropertyGroup Label="Globals">
+        <VCProjectVersion>16.0</VCProjectVersion>
+        <Keyword>Win32Proj</Keyword>
+        <ProjectGuid>{5e1d7a32-9c4b-4f0a-8b66-2a3d91c0e7f4}</ProjectGuid>
+        <RootNamespace>PythonLocatorTests</RootNamespace>
+        <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    </PropertyGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+        <ConfigurationType>Application</ConfigurationType>
+        <UseDebugLibraries>true</UseDebugLibraries>
+        <PlatformToolset>v143</PlatformToolset>
+        <CharacterSet>Unicode</CharacterSet>
+        <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+        <ConfigurationType>Application</ConfigurationType>
+        <UseDebugLibraries>false</UseDebugLibraries>
+        <PlatformToolset>v143</PlatformToolset>
+        <WholeProgramOptimization>true</WholeProgramOptimization>
+        <CharacterSet>Unicode</CharacterSet>
+        <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    </PropertyGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
+    <ImportGroup Label="ExtensionSettings">
+    </ImportGroup>
+    <ImportGroup Label="Shared">
+    </ImportGroup>
+    <ImportGroup Label="PropertySheets">
+        <Import Project="$(MSBuildThisFileDirectory)..\..\BearApps.user.props" Condition="Exists('$(MSBuildThisFileDirectory)..\..\BearApps.user.props')"/>
+    </ImportGroup>
+    <PropertyGroup Label="UserMacros"/>
+    <!-- Say what is missing instead of failing on an include -->
+    <Target Name="BearCheckPython" BeforeTargets="PrepareForBuild">
+        <Error Condition="'$(PYTHONPATH)'=='' or !Exists('$(PYTHONPATH)\include\Python.h')" Text="Python not found at PYTHONPATH='$(PYTHONPATH)'. Run scripts\setup-deps.ps1, or set it in BearApps.user.props (see README)."/>
+    </Target>
+    <ItemDefinitionGroup>
+        <ClCompile>
+            <WarningLevel>Level3</WarningLevel>
+            <SDLCheck>true</SDLCheck>
+            <ConformanceMode>true</ConformanceMode>
+            <LanguageStandard>stdcpplatest</LanguageStandard>
+            <!-- ..\ for PythonLocator.h, PCH.h and Coord.h; same limited API as the plugin -->
+            <PreprocessorDefinitions>Py_LIMITED_API=0x03080000;_CONSOLE;PYTHON_HOME_DIR=$(PYTHONPATH.Replace('\', '/'));%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <AdditionalIncludeDirectories>..\;..\..\ThirdParty\googletest\googletest\include;$(PYTHONPATH)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        </ClCompile>
+        <Link>
+            <SubSystem>Console</SubSystem>
+            <GenerateDebugInformation>true</GenerateDebugInformation>
+            <AdditionalLibraryDirectories>$(PYTHONPATH)\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+            <AdditionalDependencies>python3.lib;delayimp.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+            <DelayLoadDLLs>python3.dll</DelayLoadDLLs>
+        </Link>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+        <ClCompile>
+            <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+        <ClCompile>
+            <FunctionLevelLinking>true</FunctionLevelLinking>
+            <IntrinsicFunctions>true</IntrinsicFunctions>
+            <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+        <Link>
+            <EnableCOMDATFolding>true</EnableCOMDATFolding>
+            <OptimizeReferences>true</OptimizeReferences>
+        </Link>
+    </ItemDefinitionGroup>
+    <ItemGroup>
+        <ClCompile Include="main.cpp"/>
+        <ClCompile Include="Probe.cpp"/>
+        <ClCompile Include="PythonLocatorTests.cpp"/>
+        <ClCompile Include="..\PythonLocator.cpp">
+            <PrecompiledHeader>NotUsing</PrecompiledHeader>
+        </ClCompile>
+    </ItemGroup>
+    <ItemGroup>
+        <ClInclude Include="Probe.h"/>
+        <ClInclude Include="..\PythonLocator.h"/>
+    </ItemGroup>
+    <ItemGroup>
+        <!-- Static lib, linked automatically -->
+        <ProjectReference Include="..\..\ThirdParty\gtest\gtest.vcxproj">
+            <Project>{3c17b98f-54a2-4b3f-bc3c-a6c60b2af880}</Project>
+        </ProjectReference>
+    </ItemGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
+    <ImportGroup Label="ExtensionTargets">
+    </ImportGroup>
+    <!-- shortcut: Rider's C++ MSBuild build invokes this project with /t:PythonLocatorTests (project name as target); alias it to Build. -->
+    <Target Name="PythonLocatorTests" DependsOnTargets="Build"/>
+</Project>

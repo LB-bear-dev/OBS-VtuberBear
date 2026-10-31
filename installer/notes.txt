@@ -1,0 +1,11 @@
+This plugin expects:
+
+  - OBS Studio 33 or newer (64-bit).
+
+  - Discord running on the same PC
+  -- You will need to run in developer mode to get your user ID and others'
+
+  - Optional: Python 3.8 or newer (64-bit)
+
+
+Installs to <your OBS folder>\plugins\OBS-VtuberBear.

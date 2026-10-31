@@ -1,0 +1,6 @@
+[submodule "ThirdParty/googletest"]
+	path = ThirdParty/googletest
+	url = https://github.com/google/googletest.git
+[submodule "ThirdParty/psd_sdk"]
+	path = ThirdParty/psd_sdk
+	url = https://github.com/MolecularMatters/psd_sdk.git

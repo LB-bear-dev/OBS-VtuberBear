@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <ItemGroup Label="ProjectConfigurations">
+        <ProjectConfiguration Include="Debug|x64">
+            <Configuration>Debug</Configuration>
+            <Platform>x64</Platform>
+        </ProjectConfiguration>
+        <ProjectConfiguration Include="Release|x64">
+            <Configuration>Release</Configuration>
+            <Platform>x64</Platform>
+        </ProjectConfiguration>
+    </ItemGroup>
+    <PropertyGroup Label="Globals">
+        <VCProjectVersion>16.0</VCProjectVersion>
+        <Keyword>Win32Proj</Keyword>
+        <ProjectGuid>{3c349a86-4409-4b3d-8e58-957dda5d9994}</ProjectGuid>
+        <RootNamespace>CharacterControlOBS</RootNamespace>
+        <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    </PropertyGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+        <ConfigurationType>DynamicLibrary</ConfigurationType>
+        <UseDebugLibraries>true</UseDebugLibraries>
+        <PlatformToolset>v143</PlatformToolset>
+        <CharacterSet>Unicode</CharacterSet>
+        <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+        <ConfigurationType>DynamicLibrary</ConfigurationType>
+        <UseDebugLibraries>false</UseDebugLibraries>
+        <WholeProgramOptimization>true</WholeProgramOptimization>
+        <CharacterSet>Unicode</CharacterSet>
+        <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+        <PlatformToolset>v143</PlatformToolset>
+    </PropertyGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
+    <ImportGroup Label="ExtensionSettings">
+    </ImportGroup>
+    <ImportGroup Label="Shared">
+    </ImportGroup>
+    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+        <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform"/>
+        <Import Project="..\CharacterControlCore\PropertySheet2.props"/>
+    </ImportGroup>
+    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+        <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform"/>
+        <Import Project="..\CharacterControlCore\PropertySheet2.props"/>
+    </ImportGroup>
+    <PropertyGroup Label="UserMacros"/>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+        <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+        <CustomBuildAfterTargets>Build</CustomBuildAfterTargets>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+        <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    </PropertyGroup>
+    <!-- Run/debug launches OBS (OBSEXE is its bin\64bit folder, see PropertySheet2.props) with the plugin deployed by the post-build copy.
+         Its updater and missing-files dialogs are switched off so nothing modal waits behind the debugger. -->
+    <PropertyGroup>
+        <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+        <LocalDebuggerCommand>$([MSBuild]::EnsureTrailingSlash('$(OBSEXE)'))obs64.exe</LocalDebuggerCommand>
+        <LocalDebuggerWorkingDirectory>$([MSBuild]::EnsureTrailingSlash('$(OBSEXE)'))</LocalDebuggerWorkingDirectory>
+        <LocalDebuggerCommandArguments>--disable-updater --disable-missing-files-check</LocalDebuggerCommandArguments>
+    </PropertyGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+        <ClCompile>
+            <WarningLevel>Level3</WarningLevel>
+            <SDLCheck>true</SDLCheck>
+            <PreprocessorDefinitions>_DEBUG;QT_NO_DEBUG_STREAM;QT_NO_VERSION_TAGGING;Py_LIMITED_API=0x03080000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <ConformanceMode>true</ConformanceMode>
+            <LanguageStandard>stdcpp20</LanguageStandard>
+            <AdditionalIncludeDirectories>$(OBSPATH)\..\libobs;$(OBSPATH)\config;..\;..\ThirdParty\psd_sdk\src;$(DiscordBearDir)include;$(QTPATH)\include;$(PYTHONPATH)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+            <PrecompiledHeader>Use</PrecompiledHeader>
+            <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
+            <LanguageStandard_C>stdclatest</LanguageStandard_C>
+        </ClCompile>
+        <Link>
+            <GenerateDebugInformation>true</GenerateDebugInformation>
+            <DelayLoadDLLs>python3.dll</DelayLoadDLLs>
+            <AdditionalLibraryDirectories>$(OBSPATH)\libobs\RelWithDebInfo;$(OBSPATH)\deps\w32-pthreads\RelWithDebInfo;$(DiscordBearDir)$(Configuration);$(QTPATH)\lib;$(PYTHONPATH)\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+            <AdditionalDependencies>DiscordBear.lib;obs.lib;w32-pthreads.lib;delayimp.lib;Qt6Core.lib;Qt6Gui.lib;Qt6Widgets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        </Link>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+        <ClCompile>
+            <WarningLevel>Level3</WarningLevel>
+            <FunctionLevelLinking>true</FunctionLevelLinking>
+            <IntrinsicFunctions>true</IntrinsicFunctions>
+            <SDLCheck>true</SDLCheck>
+            <PreprocessorDefinitions>NDEBUG;QT_NO_DEBUG_STREAM;__INSURE__;QT_NO_VERSION_TAGGING;Py_LIMITED_API=0x03080000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <ConformanceMode>true</ConformanceMode>
+            <LanguageStandard>stdcpp20</LanguageStandard>
+            <AdditionalIncludeDirectories>$(OBSPATH)\..\libobs;$(OBSPATH)\config;..\;..\ThirdParty\psd_sdk\src;$(DiscordBearDir)include;$(QTPATH)\include;$(PYTHONPATH)\include</AdditionalIncludeDirectories>
+            <!-- The linker's /GUARD:CF and /GUARD:EHCONT need every module compiled with them. -->
+            <ControlFlowGuard>Guard</ControlFlowGuard>
+            <AdditionalOptions>/Zc:__cplusplus /guard:ehcont %(AdditionalOptions)</AdditionalOptions>
+            <LanguageStandard_C>stdclatest</LanguageStandard_C>
+            <PrecompiledHeader>Use</PrecompiledHeader>
+            <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
+        </ClCompile>
+        <Link>
+            <EnableCOMDATFolding>true</EnableCOMDATFolding>
+            <OptimizeReferences>true</OptimizeReferences>
+            <GenerateDebugInformation>true</GenerateDebugInformation>
+            <DelayLoadDLLs>python3.dll</DelayLoadDLLs>
+            <AdditionalLibraryDirectories>$(OBSPATH)\libobs\RelWithDebInfo;$(OBSPATH)\deps\w32-pthreads\RelWithDebInfo;$(DiscordBearDir)$(Configuration);$(QTPATH)\lib;$(PYTHONPATH)\libs</AdditionalLibraryDirectories>
+            <AdditionalDependencies>DiscordBear.lib;obs.lib;w32-pthreads.lib;delayimp.lib;Qt6Core.lib;Qt6Gui.lib;Qt6Widgets.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+            <!-- Control Flow Guard and EH continuation metadata for the psd_sdk code built with /guard:cf, and CET shadow stack support. -->
+            <AdditionalOptions>/VERBOSE:LIB /GUARD:CF /GUARD:EHCONT /CETCOMPAT %(AdditionalOptions)</AdditionalOptions>
+        </Link>
+        <CustomBuildStep/>
+    </ItemDefinitionGroup>
+    <!-- Release builds can stamp their version: msbuild /p:PluginVersion=1.2.3 (falls back to plugin-macros.h). -->
+    <ItemDefinitionGroup Condition="'$(PluginVersion)'!=''">
+        <ClCompile>
+            <PreprocessorDefinitions>PLUGIN_VERSION="$(PluginVersion)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+    </ItemDefinitionGroup>
+    <ItemGroup>
+        <ClInclude Include="ActiveCharacters.h"/>
+        <ClInclude Include="Attribute.h"/>
+        <ClInclude Include="Character.h"/>
+        <ClInclude Include="CharacterFile.h"/>
+        <ClInclude Include="CharacterSource.h"/>
+        <ClInclude Include="Coord.h"/>
+        <ClInclude Include="DiscordComponent.h"/>
+        <ClInclude Include="DiscordDock.h"/>
+        <ClInclude Include="DiscordVoice.h"/>
+        <ClInclude Include="ImageLayer.h"/>
+        <ClInclude Include="Messaging.h"/>
+        <ClInclude Include="PCH.h"/>
+        <ClInclude Include="PathRules.h"/>
+        <ClInclude Include="PythonLocator.h"/>
+        <ClInclude Include="WatchedPythonScript.h"/>
+        <ClInclude Include="PythonInterface.h"/>
+        <ClInclude Include="VoiceRoster.h"/>
+        <ClInclude Include="WatchedImage.h"/>
+        <ClInclude Include="plugin-macros.h"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ClCompile Include="ActiveCharacters.cpp"/>
+        <ClCompile Include="Character.cpp"/>
+        <ClCompile Include="CharacterFile.cpp"/>
+        <ClCompile Include="DiscordComponent.cpp"/>
+        <ClCompile Include="DiscordDock.cpp"/>
+        <ClCompile Include="DiscordVoice.cpp"/>
+        <ClCompile Include="ImageLayer.cpp"/>
+        <ClCompile Include="PCH.cpp">
+            <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+            <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+        </ClCompile>
+        <ClCompile Include="PathRules.cpp"/>
+        <ClCompile Include="plugin-main.cpp"/>
+        <ClCompile Include="PythonInterface.cpp"/>
+        <ClCompile Include="PythonLocator.cpp"/>
+        <ClCompile Include="ScriptedCharacter.cpp"/>
+        <ClCompile Include="SimpleCharacter.cpp"/>
+        <ClCompile Include="WatchedPythonScript.cpp"/>
+        <ClCompile Include="VoiceRoster.cpp"/>
+        <ClCompile Include="WatchedImage.cpp"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="packages.config"/>
+    </ItemGroup>
+    <ItemGroup>
+        <!-- Static lib built from the ThirdParty\psd_sdk submodule, linked automatically -->
+        <ProjectReference Include="..\ThirdParty\psd\psd.vcxproj">
+            <Project>{b4d611bc-58f9-4352-b217-c8217acbf057}</Project>
+        </ProjectReference>
+    </ItemGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
+    <ImportGroup Label="ExtensionTargets">
+        <Import Project="..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets" Condition="Exists('..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')"/>
+    </ImportGroup>
+    <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+        <PropertyGroup>
+            <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them. For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+        </PropertyGroup>
+        <Error Condition="!Exists('..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets'))"/>
+    </Target>
+    <!-- shortcut: Rider's C++ MSBuild build invokes this project with /t:DiscordBearTests (project name as target); alias it to Build, same as DiscordBear.vcxproj. -->
+    <Target Name="DiscordBearTests" DependsOnTargets="Build"/>
+    <!-- DiscordBear.dll ships next to the plugin, so the staged one (see DiscordBearDir in PropertySheet2.props) goes next to
+         the build output before the post-build step deploys that folder to OBS. CI's packaging picks it up from there too. -->
+    <Target Name="BearCopyDiscordBear" BeforeTargets="PostBuildEvent">
+        <Copy SourceFiles="$(DiscordBearDir)$(Configuration)\DiscordBear.dll" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true"/>
+    </Target>
+    <!-- Stopping the debugger kills OBS, which leaves its run_* marker files in %APPDATA%\obs-studio\.sentinel; the next launch then
+         opens a "Crash or unclean shutdown detected" safe mode prompt (OBS has no switch to skip it). Clearing the markers on a deploying
+         Debug build keeps that prompt from sitting between you and the debugger. -->
+    <Target Name="BearClearObsCrashMarkers" AfterTargets="Build" Condition="'$(DeployToOBS)'=='true' and '$(Configuration)'=='Debug' and Exists('$(APPDATA)\obs-studio\.sentinel')">
+        <ItemGroup>
+            <_BearObsCrashMarker Include="$(APPDATA)\obs-studio\.sentinel\run_*"/>
+        </ItemGroup>
+        <Delete Files="@(_BearObsCrashMarker)" ContinueOnError="true"/>
+    </Target>
+</Project>

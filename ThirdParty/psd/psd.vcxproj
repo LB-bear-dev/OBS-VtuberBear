@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <!-- psd_sdk as a static library for OBS-VtuberBear, built with the same toolset and DLL runtime as the plugin.
+         The sources are the ThirdParty\psd_sdk submodule, pinned to a commit; after cloning, initialise it with
+         git submodule update (init option). The file list is the Windows one from psd_sdk's src\Psd\CMakeLists.txt;
+         its build\VS2019\Psd.vcxproj is out of date (no PsdMemoryFile.cpp) and builds miniz as C, which no longer compiles. -->
+    <ItemGroup Label="ProjectConfigurations">
+        <ProjectConfiguration Include="Debug|x64">
+            <Configuration>Debug</Configuration>
+            <Platform>x64</Platform>
+        </ProjectConfiguration>
+        <ProjectConfiguration Include="Release|x64">
+            <Configuration>Release</Configuration>
+            <Platform>x64</Platform>
+        </ProjectConfiguration>
+    </ItemGroup>
+    <PropertyGroup Label="Globals">
+        <VCProjectVersion>16.0</VCProjectVersion>
+        <Keyword>Win32Proj</Keyword>
+        <ProjectGuid>{b4d611bc-58f9-4352-b217-c8217acbf057}</ProjectGuid>
+        <RootNamespace>psd</RootNamespace>
+        <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    </PropertyGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+        <ConfigurationType>StaticLibrary</ConfigurationType>
+        <UseDebugLibraries>true</UseDebugLibraries>
+        <PlatformToolset>v143</PlatformToolset>
+        <CharacterSet>Unicode</CharacterSet>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+        <ConfigurationType>StaticLibrary</ConfigurationType>
+        <UseDebugLibraries>false</UseDebugLibraries>
+        <PlatformToolset>v143</PlatformToolset>
+        <CharacterSet>Unicode</CharacterSet>
+    </PropertyGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
+    <PropertyGroup Label="UserMacros">
+        <PsdSourceDir>$(MSBuildThisFileDirectory)..\psd_sdk\src\Psd\</PsdSourceDir>
+    </PropertyGroup>
+    <ItemDefinitionGroup>
+        <ClCompile>
+            <WarningLevel>Level3</WarningLevel>
+            <PrecompiledHeader>NotUsing</PrecompiledHeader>
+            <!-- psd_sdk parses files from users and its own bounds checks are asserts that NDEBUG removes, so keep the stack cookie on. -->
+            <BufferSecurityCheck>true</BufferSecurityCheck>
+        </ClCompile>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+        <ClCompile>
+            <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+        <ClCompile>
+            <Optimization>MaxSpeed</Optimization>
+            <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <!-- Control Flow Guard and EH continuation metadata, so a corrupted function pointer or return address is harder to use.
+                 Release only: Debug builds can use Edit and Continue, which CFG does not support. The linking project needs /GUARD:CF to use them. -->
+            <ControlFlowGuard>Guard</ControlFlowGuard>
+            <AdditionalOptions>/guard:ehcont %(AdditionalOptions)</AdditionalOptions>
+        </ClCompile>
+    </ItemDefinitionGroup>
+    <ItemGroup>
+        <ClCompile Include="$(PsdSourceDir)PsdAllocator.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdBlendMode.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdColorMode.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdDecompressRle.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdExport.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdFile.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdFixedSizeString.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdInterleave.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdLayerCanvasCopy.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdMallocAllocator.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdMemoryFile.cpp"/>
+        <!-- The C++ copy of miniz, as psd_sdk's CMake build uses: Psdminiz.c includes C++ headers, so it can't build as C -->
+        <ClCompile Include="$(PsdSourceDir)Psdminiz.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdNativeFile.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdParseColorModeDataSection.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdParseDocument.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdParseImageDataSection.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdParseImageResourcesSection.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdParseLayerMaskSection.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdPch.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdStringUtil.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdSyncFileReader.cpp"/>
+        <ClCompile Include="$(PsdSourceDir)PsdSyncFileWriter.cpp"/>
+    </ItemGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
+    <!-- shortcut: Rider's C++ MSBuild build invokes dependencies with /t:OBS-VtuberBear (project name as target); alias it to Build, same as DiscordBear.vcxproj. -->
+    <Target Name="OBS-VtuberBear" DependsOnTargets="Build"/>
+    <Target Name="CheckPsdSdkSubmodule" BeforeTargets="PrepareForBuild">
+        <Error Condition="!Exists('$(PsdSourceDir)PsdPch.cpp')" Text="psd_sdk sources are missing. Run: git submodule update --init"/>
+    </Target>
+</Project>

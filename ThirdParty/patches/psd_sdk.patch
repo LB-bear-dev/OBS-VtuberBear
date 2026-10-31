@@ -1,0 +1,92 @@
+diff --git a/src/Psd/PsdDecompressRle.cpp b/src/Psd/PsdDecompressRle.cpp
+index bfee9dc..69eb707 100644
+--- a/src/Psd/PsdDecompressRle.cpp
++++ b/src/Psd/PsdDecompressRle.cpp
+@@ -41,7 +41,15 @@ namespace imageUtil
+ 			else if (byte > 0x80)
+ 			{
+ 				// next 257-byte bytes are replicated from the next source byte
+-				const unsigned int count = static_cast<unsigned int>(257 - byte);
++				unsigned int count = static_cast<unsigned int>(257 - byte);
++
++				if (bytesRead >= srcSize)
++				{
++					PSD_ERROR("DecompressRle", "Malformed RLE data encountered");
++					return;
++				}
++				if (count > size - offset)
++					count = size - offset;
+ 
+ 				memset(dest + offset, *src++, count);
+ 				offset += count;
+@@ -52,8 +60,14 @@ namespace imageUtil
+ 			else
+ 			{
+ 				// copy next byte+1 bytes 1-by-1
+-				const unsigned int count = static_cast<unsigned int>(byte + 1);
+-				
++				unsigned int count = static_cast<unsigned int>(byte + 1);
++
++				if (count > srcSize - bytesRead || count > size - offset)
++				{
++					PSD_ERROR("DecompressRle", "Malformed RLE data encountered");
++					return;
++				}
++
+ 				memcpy(dest + offset, src, count);
+ 
+ 				src += count;
+diff --git a/src/Psd/PsdParseLayerMaskSection.cpp b/src/Psd/PsdParseLayerMaskSection.cpp
+index 28ae83e..3a57139 100644
+--- a/src/Psd/PsdParseLayerMaskSection.cpp
++++ b/src/Psd/PsdParseLayerMaskSection.cpp
+@@ -1560,13 +1560,15 @@ static LayerMaskSection* ParseLayer(const Document* document, SyncFileReader& re
+ 			// read the layer count. if it is a negative number, its absolute value is the number of layers and the 
+ 			// first alpha channel contains the transparency data for the merged result.
+ 			// this will also be reflected in the channelCount of the document.
+-			int16_t layerCount = fileUtil::ReadFromFileBE<int16_t>(reader);
++			// wider than the 16 bits stored, so that negating -32768 doesn't wrap back to itself
++			int32_t layerCount = fileUtil::ReadFromFileBE<int16_t>(reader);
+ 			layerMaskSection->hasTransparencyMask = (layerCount < 0);
+ 			if (layerCount < 0)
+ 				layerCount = -layerCount;
+ 
+ 			layerMaskSection->layerCount = static_cast<unsigned int>(layerCount);
+ 			layerMaskSection->layers = memoryUtil::AllocateArray<Layer>(allocator, layerMaskSection->layerCount);
++			memset(layerMaskSection->layers, 0, sizeof(Layer)*layerMaskSection->layerCount);
+ 
+ 			// read layer record for each layer
+ 			for (unsigned int i=0; i < layerMaskSection->layerCount; ++i)
+@@ -1898,7 +1900,11 @@ static LayerMaskSection* ParseLayer(const Document* document, SyncFileReader& re
+ 						{
+ 							// PSD Unicode strings store 4 bytes for the number of characters, NOT bytes, followed by
+ 							// 2-byte UTF16 Unicode data without the terminating null.
+-							const uint32_t characterCountWithoutNull = fileUtil::ReadFromFileBE<uint32_t>(reader);
++							uint32_t characterCountWithoutNull = fileUtil::ReadFromFileBE<uint32_t>(reader);
++							// never more characters than the block has room for
++							const uint32_t maximumCharacters = static_cast<uint32_t>((dataLength - sizeof(uint32_t)) / sizeof(uint16_t));
++							if (characterCountWithoutNull > maximumCharacters)
++								characterCountWithoutNull = maximumCharacters;
+ 							layer->utf16Name = memoryUtil::AllocateArray<uint16_t>(allocator, characterCountWithoutNull + 1u);
+ 
+ 							for (uint32_t c = 0u; c < characterCountWithoutNull; ++c)
+@@ -2168,12 +2174,16 @@ LayerMaskSection* ParseLayerMaskSection(const Document* document, File* file, Al
+ 			const bool isGroupEnd = (layer->type == layerType::SECTION_DIVIDER);
+ 			if (isGroupEnd)
+ 			{
+-				--stackIndex;
++				if (stackIndex > 0)
++					--stackIndex;
+ 			}
+ 			else if (isGroupStart)
+ 			{
+-				++stackIndex;
+-				layerStack[stackIndex] = layer;
++				if (stackIndex < 255)
++				{
++					++stackIndex;
++					layerStack[stackIndex] = layer;
++				}
+ 			}
+ 		}
+ 	}

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MSVC Code Analysis rules, used when building with /p:StaticAnalysis=true (see Directory.Build.props).
+     Starts from Microsoft's recommended native set; add <Rule Id="C26xxx" Action="None" /> lines to silence noise. -->
+<RuleSet Name="BearApps" Description="Code analysis rules for the BearApps projects." ToolsVersion="17.0">
+  <Include Path="NativeRecommendedRules.ruleset" Action="Default" />
+</RuleSet>

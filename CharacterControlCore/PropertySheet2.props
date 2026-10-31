@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Per-machine paths come from BearApps.user.props in the repo root, written by scripts\setup-deps.ps1 and not
+       checked in. Whatever it leaves unset falls back to where setup-deps.ps1 puts things under deps\.
+       msbuild /p:OBSPATH=... still overrides both; global properties always win. -->
+  <Import Project="$(MSBuildThisFileDirectory)..\BearApps.user.props" Condition="Exists('$(MSBuildThisFileDirectory)..\BearApps.user.props')" />
+  <PropertyGroup Label="UserMacros">
+    <BearDepsDir>$(MSBuildThisFileDirectory)..\deps\</BearDepsDir>
+    <OBSPATH Condition="'$(OBSPATH)'==''">$(BearDepsDir)obs-studio\build_x64</OBSPATH>
+    <OBSEXE Condition="'$(OBSEXE)'==''">$(OBSPATH)\rundir\RelWithDebInfo\bin\64bit\</OBSEXE>
+    <!-- OBS's plugin layout: <OBSPLUGINS>\<plugin>\<plugin>.dll with the module's DLLs and data folder inside it
+         (https://obsproject.com/kb/legacy-plugin-locations). OBSPLUGINS is the shared plugins folder,
+         e.g. C:\ProgramData\obs-studio\plugins; OBSPLUGINDIR is this plugin's own folder inside it. -->
+    <_BearObsPluginsDefaulted Condition="'$(OBSPLUGINS)'==''">true</_BearObsPluginsDefaulted>
+    <OBSPLUGINS Condition="'$(OBSPLUGINS)'==''">$(OBSPATH)\rundir\RelWithDebInfo\plugins</OBSPLUGINS>
+    <OBSPLUGINDIR Condition="'$(OBSPLUGINDIR)'==''">$(OBSPLUGINS)\OBS-VtuberBear</OBSPLUGINDIR>
+    <!-- QTPATH and PYTHONPATH have no fallback: Qt's folder name carries its version, and Python lives wherever it was installed. -->
+    <!-- DiscordBear is built in its own repo, which stages its headers and Debug/Release binaries here (see the README in it). -->
+    <DiscordBearDir>$(MSBuildThisFileDirectory)..\ExternalDependencies\DiscordBear\</DiscordBearDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- Copy build output into OBS's plugin folder after each build: off on CI (GitHub Actions sets CI=true),
+         and, when OBSPLUGINS was left at its default, off when that folder doesn't exist, e.g. a libobs-only build
+         from setup-deps.ps1. An OBSPLUGINS you set yourself is created on first deploy. -->
+    <DeployToOBS Condition="'$(DeployToOBS)'=='' and '$(CI)'=='true'">false</DeployToOBS>
+    <DeployToOBS Condition="'$(DeployToOBS)'=='' and '$(_BearObsPluginsDefaulted)'=='true' and !Exists('$(OBSPLUGINS)')">false</DeployToOBS>
+    <DeployToOBS Condition="'$(DeployToOBS)'==''">true</DeployToOBS>
+  </PropertyGroup>
+  <!-- Only OBS-VtuberBear uses OBS, Qt and Python; say what is missing instead of failing on an include. -->
+  <Target Name="BearCheckDependencies" BeforeTargets="PrepareForBuild" Condition="'$(MSBuildProjectName)'=='OBS-VtuberBear'">
+    <PropertyGroup>
+      <_BearSetupHint>Run scripts\setup-deps.ps1, or set it in BearApps.user.props (see README).</_BearSetupHint>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(OBSPATH)\libobs')" Text="OBS build not found at OBSPATH='$(OBSPATH)'. $(_BearSetupHint)" />
+    <Error Condition="'$(QTPATH)'=='' or !Exists('$(QTPATH)\include')" Text="Qt not found at QTPATH='$(QTPATH)'. $(_BearSetupHint)" />
+    <Error Condition="'$(PYTHONPATH)'=='' or !Exists('$(PYTHONPATH)\include\Python.h')" Text="Python not found at PYTHONPATH='$(PYTHONPATH)'. $(_BearSetupHint)" />
+    <Error Condition="!Exists('$(DiscordBearDir)$(Configuration)\DiscordBear.lib')" Text="No $(Configuration) DiscordBear in '$(DiscordBearDir)'. Build DiscordBear.sln in that configuration (see ExternalDependencies\DiscordBear\README.md)." />
+  </Target>
+  <ItemDefinitionGroup>
+    <PostBuildEvent Condition="'$(DeployToOBS)'=='true'">
+      <Command>xcopy "$(SolutionDir)$(Platform)\$(Configuration)\*.dll" "$(OBSPLUGINDIR)\" /y /d
+xcopy "$(SolutionDir)$(Platform)\$(Configuration)\*.pdb" "$(OBSPLUGINDIR)\" /y /d</Command>
+    </PostBuildEvent>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(QTPATH)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="OBSPATH">
+      <Value>$(OBSPATH)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OBSEXE">
+      <Value>$(OBSEXE)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OBSPLUGINS">
+      <Value>$(OBSPLUGINS)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OBSPLUGINDIR">
+      <Value>$(OBSPLUGINDIR)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="QTPATH">
+      <Value>$(QTPATH)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="PYTHONPATH">
+      <Value>$(PYTHONPATH)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

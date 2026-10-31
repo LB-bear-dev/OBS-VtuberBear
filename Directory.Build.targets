@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+    <!-- A clang-cl build is a check, not what ships (CI builds the release with MSVC):
+           msbuild OBS-VtuberBear.sln /p:Configuration=Debug /p:Platform=x64 /p:PlatformToolset=ClangCL
+         These settings live here rather than in Directory.Build.props because they have to override
+         the projects' own ClCompile settings, which come after the props. -->
+    <ItemDefinitionGroup Condition="'$(PlatformToolset)'=='ClangCL'">
+        <ClCompile>
+            <!-- MSVC intrinsics that third-party headers use but clang doesn't provide. -->
+            <ForcedIncludeFiles>$(MSBuildThisFileDirectory)ClangTidyShims.h;%(ClCompile.ForcedIncludeFiles)</ForcedIncludeFiles>
+        </ClCompile>
+    </ItemDefinitionGroup>
+</Project>

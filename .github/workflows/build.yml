@@ -1,0 +1,222 @@
+name: Build
+
+# Every push/PR to main builds the plugin and uploads it as a workflow artifact.
+# Pushing a tag like v1.2.3 also publishes a GitHub Release with the zip attached.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write # needed to create releases on tag pushes
+
+env:
+  # The OBS and Python versions live in scripts/setup-deps.ps1, which local setups and this workflow both run.
+  CONFIGURATION: Release
+
+jobs:
+  build:
+    runs-on: windows-2025
+    defaults:
+      run:
+        # GitHub ends every pwsh script with an exit on $LASTEXITCODE, so only commands before the last need their own check
+        shell: pwsh
+    steps:
+      - name: Checkout plugin
+        uses: actions/checkout@v4
+        with:
+          path: plugin
+          submodules: true # ThirdParty/googletest, ThirdParty/psd_sdk
+
+      - name: Work out version
+        id: version
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          } else {
+            $version = "0.0.0-dev.$($env:GITHUB_SHA.Substring(0, 7))"
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Read dependency versions
+        id: deps
+        working-directory: plugin
+        run: |
+          $script = Get-Content -Raw scripts/setup-deps.ps1
+          foreach ($name in 'ObsVersion', 'PythonVersion') {
+            if ($script -notmatch "\[string\]\`$$name = '([^']+)'") { throw "No $name default in setup-deps.ps1" }
+            "$($name.ToLower())=$($Matches[1])" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ steps.deps.outputs.pythonversion }}
+
+      # libobs takes a while to build, so its build and OBS's prebuilt deps (incl. Qt6) are cached per OBS version.
+      # setup-deps.ps1 fetches the OBS source itself and skips the build when the cached one is there.
+      - name: Cache OBS dependencies and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            plugin/deps/obs-studio/.deps
+            plugin/deps/obs-studio/build_x64
+          key: obs-${{ steps.deps.outputs.obsversion }}-${{ runner.os }}-v2
+
+      # The same script as a local setup: submodules, NuGet packages, OBS, and plugin/BearApps.user.props with the paths.
+      - name: Set up dependencies
+        working-directory: plugin
+        run: ./scripts/setup-deps.ps1 -PythonPath $env:pythonLocation
+
+      # DiscordBear isn't built here: the plugin links the prebuilt copy checked in under ExternalDependencies/DiscordBear, and the
+      # build copies its DLL (not its PDB, which isn't shipped) into x64/<Configuration> for packaging. DiscordBear's own tests run in its own repo.
+      - name: Build plugin
+        working-directory: plugin
+        run: |
+          msbuild OBS-VtuberBear.sln /m /p:Configuration=$env:CONFIGURATION /p:Platform=x64 `
+            /p:PluginVersion=${{ steps.version.outputs.version }} `
+            /p:DeployToOBS=false
+
+      # Checks the plugin's Python loader against the Python set up above, and with no Python at all.
+      - name: Run Python loader tests
+        working-directory: plugin/x64/${{ env.CONFIGURATION }}
+        run: ./PythonLocatorTests.exe --gtest_output=xml:${{ github.workspace }}/python-loader-test-results.xml
+
+      # WatchedFile's reload and the PSD loader, against PSDs the tests build themselves, and a quick fuzz of the loader with damaged
+      # ones. Two tests wait out WatchedFile's 10 second check interval, so this step takes about 30 seconds.
+      - name: Run character control tests
+        working-directory: plugin/x64/${{ env.CONFIGURATION }}
+        run: ./CharacterControlTests.exe --gtest_output=xml:${{ github.workspace }}/character-control-test-results.xml
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            python-loader-test-results.xml
+            character-control-test-results.xml
+          if-no-files-found: ignore
+
+      - name: Package
+        id: package
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $out = "plugin/x64/$env:CONFIGURATION"
+          $stage = 'package'
+          $plugins = "$stage/plugins/OBS-VtuberBear"
+          New-Item -ItemType Directory -Force $plugins | Out-Null
+
+          # Just ours. Python is deliberately not bundled: the plugin finds whichever
+          # Python 3 the user has installed at run time (see README). The Python set up above is only for building.
+          Copy-Item "$out/OBS-VtuberBear.dll", "$out/DiscordBear.dll" $plugins -ErrorAction Stop
+          Copy-Item plugin/README.md, plugin/LICENSE, plugin/THIRD_PARTY_NOTICES.md $stage -ErrorAction Stop
+
+          $zip = "OBS-VtuberBear-$version-windows-x64.zip"
+          Compress-Archive -Path "$stage/*" -DestinationPath $zip
+          $pdbZip = "OBS-VtuberBear-$version-windows-x64-pdb.zip"
+          Compress-Archive -Path "$out/OBS-VtuberBear.pdb" -DestinationPath $pdbZip
+
+          "zip=$zip" >> $env:GITHUB_OUTPUT
+          "pdbzip=$pdbZip" >> $env:GITHUB_OUTPUT
+
+      # The installer carries exactly what the zip does (the staged package folder) and puts it where OBS looks for plugins.
+      - name: Build installer
+        id: installer
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --no-progress -y
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          }
+          & $iscc "/DAppVersion=$version" "/DStageDir=$((Resolve-Path package).Path)" "/DOutputDir=$((Get-Location).Path)" plugin/installer/OBS-VtuberBear.iss
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          "exe=OBS-VtuberBear-$version-windows-x64-setup.exe" >> $env:GITHUB_OUTPUT
+
+      # Installs into a scratch folder, checks the files are there, then uninstalls and checks they are gone.
+      - name: Test installer
+        run: |
+          $target = Join-Path $env:RUNNER_TEMP 'installed-plugin'
+          $install = Start-Process -Wait -PassThru -FilePath '${{ steps.installer.outputs.exe }}' -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$target"
+          if ($install.ExitCode) { throw "Installer exited with $($install.ExitCode)" }
+          foreach ($file in 'OBS-VtuberBear.dll', 'DiscordBear.dll', 'LICENSE', 'THIRD_PARTY_NOTICES.md') {
+            if (-not (Test-Path (Join-Path $target $file))) { throw "The installer did not install $file" }
+          }
+
+          $uninstaller = Get-ChildItem $target -Filter 'unins*.exe' | Select-Object -First 1
+          if (-not $uninstaller) { throw 'The installer did not leave an uninstaller' }
+          Start-Process -Wait -FilePath $uninstaller.FullName -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
+          # The uninstaller hands over to a temporary copy of itself, so give it a moment
+          for ($i = 0; $i -lt 30 -and (Test-Path (Join-Path $target 'OBS-VtuberBear.dll')); $i++) { Start-Sleep -Seconds 1 }
+          if (Test-Path (Join-Path $target 'OBS-VtuberBear.dll')) { throw 'The uninstaller left the plugin behind' }
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OBS-VtuberBear-${{ steps.version.outputs.version }}-windows-x64
+          path: |
+            ${{ steps.package.outputs.zip }}
+            ${{ steps.package.outputs.pdbzip }}
+            ${{ steps.installer.outputs.exe }}
+
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ steps.package.outputs.zip }}
+            ${{ steps.package.outputs.pdbzip }}
+            ${{ steps.installer.outputs.exe }}
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+      # Slow, so it only runs when started by hand (Actions > Build > Run workflow), not on every push. Runs after packaging so it
+      # can't affect the shipped binaries. Findings show up as build warnings on the run (MSVC /analyze + clang-tidy, configured by
+      # Directory.Build.props).
+      - name: Static analysis
+        if: github.event_name == 'workflow_dispatch'
+        working-directory: plugin
+        run: |
+          msbuild OBS-VtuberBear.sln /t:Rebuild /m /p:Configuration=$env:CONFIGURATION /p:Platform=x64 `
+            /p:DeployToOBS=false `
+            /p:StaticAnalysis=true
+
+      # Builds everything again with clang-cl and reruns the tests against that build. clang catches things MSVC
+      # doesn't (its warnings show up on the run); the release is still the MSVC build packaged above.
+      # Clang-specific settings are in Directory.Build.targets.
+      - name: Clang build and tests
+        if: github.ref_type != 'tag'
+        working-directory: plugin
+        run: |
+          msbuild OBS-VtuberBear.sln /t:Rebuild /m /p:Configuration=$env:CONFIGURATION /p:Platform=x64 `
+            /p:DeployToOBS=false `
+            /p:PlatformToolset=ClangCL
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          foreach ($test in 'PythonLocatorTests', 'CharacterControlTests') {
+            & "x64/$env:CONFIGURATION/$test.exe"
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          }
+
+      # The character control tests again, built with AddressSanitizer, which stops on a read or write outside a buffer that a normal
+      # build lets pass. That is what the PSD fuzz test is for. Builds into x64/Release-asan (see Directory.Build.props), so it
+      # leaves the other builds alone, and needs the ASan runtime DLL from Visual Studio on the PATH to run.
+      - name: AddressSanitizer tests
+        if: github.ref_type != 'tag'
+        working-directory: plugin
+        run: |
+          msbuild OBS-VtuberBear/Tests/CharacterControlTests/CharacterControlTests.vcxproj /t:Rebuild /m /p:Configuration=Release /p:Platform=x64 `
+            /p:Sanitize=true /p:DeployToOBS=false "/p:SolutionDir=$((Get-Location).Path)\"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $runtime = Get-ChildItem "$vs\VC\Tools\MSVC" -Recurse -Filter clang_rt.asan_dynamic-x86_64.dll |
+            Where-Object { $_.DirectoryName -match 'Host[xX]64\\x64$' } | Select-Object -Last 1
+          if (-not $runtime) { throw 'The AddressSanitizer runtime is not installed with this Visual Studio' }
+          $env:PATH = "$($runtime.DirectoryName);$env:PATH"
+          ./x64/Release-asan/CharacterControlTests.exe --gtest_catch_exceptions=0

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <!-- Tests for the plugin's file handling: WatchedFile (CharacterControlCore), character files (CharacterFile.cpp, PathRules.cpp) and the PSD loader in WatchedImage.cpp. The
+         loader is compiled straight into this exe and talks to libobs only through a handful of calls, which ObsStubs.cpp
+         stands in for, so nothing here needs OBS running or a graphics context. Needs OBSPATH (BearApps.user.props, written by
+         scripts\setup-deps.ps1) for the libobs headers only; libobs itself is not linked. -->
+    <ItemGroup Label="ProjectConfigurations">
+        <ProjectConfiguration Include="Debug|x64">
+            <Configuration>Debug</Configuration>
+            <Platform>x64</Platform>
+        </ProjectConfiguration>
+        <ProjectConfiguration Include="Release|x64">
+            <Configuration>Release</Configuration>
+            <Platform>x64</Platform>
+        </ProjectConfiguration>
+    </ItemGroup>
+    <PropertyGroup Label="Globals">
+        <VCProjectVersion>16.0</VCProjectVersion>
+        <Keyword>Win32Proj</Keyword>
+        <ProjectGuid>{a7c3f5e1-2b84-4d6a-9e10-5f8b3c7d2a49}</ProjectGuid>
+        <RootNamespace>CharacterControlTests</RootNamespace>
+        <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    </PropertyGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+        <ConfigurationType>Application</ConfigurationType>
+        <UseDebugLibraries>true</UseDebugLibraries>
+        <PlatformToolset>v143</PlatformToolset>
+        <CharacterSet>Unicode</CharacterSet>
+        <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+        <ConfigurationType>Application</ConfigurationType>
+        <UseDebugLibraries>false</UseDebugLibraries>
+        <PlatformToolset>v143</PlatformToolset>
+        <WholeProgramOptimization>true</WholeProgramOptimization>
+        <CharacterSet>Unicode</CharacterSet>
+        <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    </PropertyGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
+    <ImportGroup Label="ExtensionSettings">
+    </ImportGroup>
+    <ImportGroup Label="Shared">
+    </ImportGroup>
+    <ImportGroup Label="PropertySheets">
+        <Import Project="$(MSBuildThisFileDirectory)..\..\..\BearApps.user.props" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\BearApps.user.props')"/>
+    </ImportGroup>
+    <PropertyGroup Label="UserMacros"/>
+    <!-- Say what is missing instead of failing on an include -->
+    <Target Name="BearCheckObs" BeforeTargets="PrepareForBuild">
+        <Error Condition="'$(OBSPATH)'=='' or !Exists('$(OBSPATH)\..\libobs\obs.h')" Text="OBS not found at OBSPATH='$(OBSPATH)'. Run scripts\setup-deps.ps1, or set it in BearApps.user.props (see README)."/>
+        <!-- nlohmann.json comes from the plugin project's NuGet packages -->
+        <Error Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')" Text="nlohmann.json not found in packages. Run scripts\setup-deps.ps1 (it restores NuGet packages)."/>
+    </Target>
+    <ItemDefinitionGroup>
+        <ClCompile>
+            <WarningLevel>Level3</WarningLevel>
+            <SDLCheck>true</SDLCheck>
+            <ConformanceMode>true</ConformanceMode>
+            <LanguageStandard>stdcpp20</LanguageStandard>
+            <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <!-- ..\..\ for PCH.h and WatchedImage.h, ..\..\..\ for CharacterControlCore\WatchedFile.h; same libobs, psd_sdk and DiscordBear
+                 header paths as the plugin. DiscordBear itself is not linked: VoiceRoster only uses its types. -->
+            <AdditionalIncludeDirectories>..\..\;..\..\..\;..\..\..\ThirdParty\googletest\googletest\include;..\..\..\ThirdParty\psd_sdk\src;..\..\..\ExternalDependencies\DiscordBear\include;$(OBSPATH)\..\libobs;$(OBSPATH)\config;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        </ClCompile>
+        <Link>
+            <SubSystem>Console</SubSystem>
+            <GenerateDebugInformation>true</GenerateDebugInformation>
+        </Link>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+        <ClCompile>
+            <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+        <ClCompile>
+            <FunctionLevelLinking>true</FunctionLevelLinking>
+            <IntrinsicFunctions>true</IntrinsicFunctions>
+            <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+        <Link>
+            <EnableCOMDATFolding>true</EnableCOMDATFolding>
+            <OptimizeReferences>true</OptimizeReferences>
+        </Link>
+    </ItemDefinitionGroup>
+    <ItemGroup>
+        <ClCompile Include="main.cpp"/>
+        <ClCompile Include="ObsStubs.cpp"/>
+        <ClCompile Include="CharacterFileTests.cpp"/>
+        <ClCompile Include="PathRulesTests.cpp"/>
+        <ClCompile Include="VoiceRosterTests.cpp"/>
+        <ClCompile Include="PsdFuzzTests.cpp" />
+        <ClCompile Include="WatchedFileTests.cpp"/>
+        <ClCompile Include="PsdLoaderTests.cpp"/>
+        <ClCompile Include="..\..\CharacterFile.cpp">
+            <PrecompiledHeader>NotUsing</PrecompiledHeader>
+        </ClCompile>
+        <ClCompile Include="..\..\PathRules.cpp">
+            <PrecompiledHeader>NotUsing</PrecompiledHeader>
+        </ClCompile>
+        <ClCompile Include="..\..\VoiceRoster.cpp">
+            <PrecompiledHeader>NotUsing</PrecompiledHeader>
+        </ClCompile>
+        <ClCompile Include="..\..\WatchedImage.cpp">
+            <PrecompiledHeader>NotUsing</PrecompiledHeader>
+        </ClCompile>
+    </ItemGroup>
+    <ItemGroup>
+        <ClInclude Include="ObsStubs.h"/>
+        <ClInclude Include="PsdBuilder.h"/>
+        <ClInclude Include="TestSupport.h"/>
+        <ClInclude Include="..\..\CharacterFile.h"/>
+        <ClInclude Include="..\..\PathRules.h"/>
+        <ClInclude Include="..\..\VoiceRoster.h"/>
+        <ClInclude Include="..\..\WatchedImage.h"/>
+        <ClInclude Include="..\..\..\CharacterControlCore\WatchedFile.h"/>
+    </ItemGroup>
+    <ItemGroup>
+        <!-- Static libs, linked automatically -->
+        <ProjectReference Include="..\..\..\ThirdParty\gtest\gtest.vcxproj">
+            <Project>{3c17b98f-54a2-4b3f-bc3c-a6c60b2af880}</Project>
+        </ProjectReference>
+        <ProjectReference Include="..\..\..\ThirdParty\psd\psd.vcxproj">
+            <Project>{b4d611bc-58f9-4352-b217-c8217acbf057}</Project>
+        </ProjectReference>
+    </ItemGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
+    <ImportGroup Label="ExtensionTargets">
+        <Import Project="..\..\..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets" Condition="Exists('..\..\..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')"/>
+    </ImportGroup>
+    <!-- shortcut: Rider's C++ MSBuild build invokes this project with /t:CharacterControlTests (project name as target); alias it to Build. -->
+    <Target Name="CharacterControlTests" DependsOnTargets="Build"/>
+</Project>
