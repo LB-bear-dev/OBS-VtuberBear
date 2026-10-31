@@ -5,7 +5,7 @@ This is a direct OBS plugin, so it does not require browser sources to render th
 This means characters do not require many system resources, resulting in a less laggy and less CPU intensive streaming experience.
 
 ## Installing a release
-- Run `OBS-VtuberBear-<version>-windows-x64-setup.exe` from the release. For a portable OBS, change the folder on the installer's folder page to `<your OBS folder>\plugins\OBS-VtuberBear`.
+- Run `OBS-VtuberBear-<version>-windows-x64-setup.exe` from the release. If you have a custom OBS install directory, install to `<your OBS folder>\plugins\OBS-VtuberBear`.
 - To install by hand, extract the release zip into your root OBS directory and delete any older copy.
 
 ### Requirements

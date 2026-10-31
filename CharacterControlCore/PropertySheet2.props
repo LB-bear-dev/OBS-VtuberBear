@@ -10,10 +10,12 @@
     <OBSEXE Condition="'$(OBSEXE)'==''">$(OBSPATH)\rundir\RelWithDebInfo\bin\64bit\</OBSEXE>
     <!-- OBS's plugin layout: <OBSPLUGINS>\<plugin>\<plugin>.dll with the module's DLLs and data folder inside it
          (https://obsproject.com/kb/legacy-plugin-locations). OBSPLUGINS is the shared plugins folder,
-         e.g. C:\ProgramData\obs-studio\plugins; OBSPLUGINDIR is this plugin's own folder inside it. -->
+         e.g. C:\ProgramData\obs-studio\plugins; OBSPLUGINDIR is this plugin's own folder inside it. OBSPLUGINDIR is always
+         worked out here, never taken from outside: the BuildMacros below export it as an environment variable, and an IDE
+         that keeps one from an earlier build (or before the rename) would otherwise deploy into a folder OBS doesn't load. -->
     <_BearObsPluginsDefaulted Condition="'$(OBSPLUGINS)'==''">true</_BearObsPluginsDefaulted>
     <OBSPLUGINS Condition="'$(OBSPLUGINS)'==''">$(OBSPATH)\rundir\RelWithDebInfo\plugins</OBSPLUGINS>
-    <OBSPLUGINDIR Condition="'$(OBSPLUGINDIR)'==''">$(OBSPLUGINS)\OBS-VtuberBear</OBSPLUGINDIR>
+    <OBSPLUGINDIR>$(OBSPLUGINS)\OBS-VtuberBear</OBSPLUGINDIR>
     <!-- QTPATH and PYTHONPATH have no fallback: Qt's folder name carries its version, and Python lives wherever it was installed. -->
     <!-- DiscordBear is built in its own repo, which stages its headers and Debug/Release binaries here (see the README in it). -->
     <DiscordBearDir>$(MSBuildThisFileDirectory)..\ExternalDependencies\DiscordBear\</DiscordBearDir>
@@ -37,9 +39,11 @@
     <Error Condition="!Exists('$(DiscordBearDir)$(Configuration)\DiscordBear.lib')" Text="No $(Configuration) DiscordBear in '$(DiscordBearDir)'. Build DiscordBear.sln in that configuration (see ExternalDependencies\DiscordBear\README.md)." />
   </Target>
   <ItemDefinitionGroup>
+    <!-- Always copies, not only newer files (no /d): after switching between Debug and Release, the build being deployed is
+         often older than the one already in OBS, and must still replace it. -->
     <PostBuildEvent Condition="'$(DeployToOBS)'=='true'">
-      <Command>xcopy "$(SolutionDir)$(Platform)\$(Configuration)\*.dll" "$(OBSPLUGINDIR)\" /y /d
-xcopy "$(SolutionDir)$(Platform)\$(Configuration)\*.pdb" "$(OBSPLUGINDIR)\" /y /d</Command>
+      <Command>xcopy "$(SolutionDir)$(Platform)\$(Configuration)\*.dll" "$(OBSPLUGINDIR)\" /y
+xcopy "$(SolutionDir)$(Platform)\$(Configuration)\*.pdb" "$(OBSPLUGINDIR)\" /y</Command>
     </PostBuildEvent>
     <ClCompile>
       <AdditionalIncludeDirectories>$(QTPATH)</AdditionalIncludeDirectories>
