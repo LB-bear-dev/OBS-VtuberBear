@@ -4,15 +4,13 @@ A plugin for OBS that directly voice chat speaking state, so you can control a v
 This is a direct OBS plugin, so it does not require browser sources to render the characters. The characters are drawn directly in OBS.
 This means characters do not require many system resources, resulting in a less laggy and less CPU intensive streaming experience.
 
-### Installing a release
-Run `OBS-VtuberBear-<version>-windows-x64-setup.exe` from the release. For a portable OBS, change the folder on the installer's folder page to `<your OBS folder>\plugins\OBS-VtuberBear`.
+## Installing a release
+- Run `OBS-VtuberBear-<version>-windows-x64-setup.exe` from the release. For a portable OBS, change the folder on the installer's folder page to `<your OBS folder>\plugins\OBS-VtuberBear`.
+- To install by hand, extract the release zip into your root OBS directory and delete any older copy.
 
-To install by hand, extract the release zip into your root OBS directory and delete any older copy.
-
-Requirements:
-OBS 33.0.0 and later
-
-If you want to use the scripted characters, you need Python 3.8 or newer installed
+###Requirements:
+- OBS 33.0.0 and later
+- If you want to use the scripted characters, you need Python 3.8 or newer installed
 
 ## Building Setup
 
@@ -44,10 +42,6 @@ Run `setup-deps.ps1`. It gets everything the solution needs from outside the rep
 - Finds the python install
 
 Open `OBS-VtuberBear.sln` in your IDE of choice, build and run.
-
-### DiscordBear
-
-`DiscordBear.dll`, which gets the Discord voice state, is built in its own repository with `DiscordBear.sln`. This repo carries a prebuilt copy in `ExternalDependencies/DiscordBear` (headers, plus the Debug and Release DLL and import library, without the PDB) and builds against it, so nothing here needs the DiscordBear source. The plugin build copies that DLL next to `OBS-VtuberBear.dll`, so it deploys to OBS and ships with the plugin. To update it, build both configurations of `DiscordBear.sln` (each build refreshes the copy here) and commit the folder.
 
 ### Copying builds into OBS
 
