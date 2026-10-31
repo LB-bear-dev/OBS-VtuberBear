@@ -18,7 +18,7 @@
     <OBSPLUGINDIR>$(OBSPLUGINS)\OBS-VtuberBear</OBSPLUGINDIR>
     <!-- QTPATH and PYTHONPATH have no fallback: Qt's folder name carries its version, and Python lives wherever it was installed. -->
     <!-- DiscordBear is built in its own repo, which stages its headers and Debug/Release binaries here (see the README in it). -->
-    <DiscordBearDir>$(MSBuildThisFileDirectory)..\ExternalDependencies\DiscordBear\</DiscordBearDir>
+    <DiscordBearDir>$(MSBuildThisFileDirectory)..\ThirdParty\DiscordBear\</DiscordBearDir>
   </PropertyGroup>
   <PropertyGroup>
     <!-- Copy build output into OBS's plugin folder after each build: off on CI (GitHub Actions sets CI=true),
@@ -36,7 +36,7 @@
     <Error Condition="!Exists('$(OBSPATH)\libobs')" Text="OBS build not found at OBSPATH='$(OBSPATH)'. $(_BearSetupHint)" />
     <Error Condition="'$(QTPATH)'=='' or !Exists('$(QTPATH)\include')" Text="Qt not found at QTPATH='$(QTPATH)'. $(_BearSetupHint)" />
     <Error Condition="'$(PYTHONPATH)'=='' or !Exists('$(PYTHONPATH)\include\Python.h')" Text="Python not found at PYTHONPATH='$(PYTHONPATH)'. $(_BearSetupHint)" />
-    <Error Condition="!Exists('$(DiscordBearDir)$(Configuration)\DiscordBear.lib')" Text="No $(Configuration) DiscordBear in '$(DiscordBearDir)'. Build DiscordBear.sln in that configuration (see ExternalDependencies\DiscordBear\README.md)." />
+    <Error Condition="!Exists('$(DiscordBearDir)$(Configuration)\DiscordBear.lib')" Text="No $(Configuration) DiscordBear in '$(DiscordBearDir)'. Build DiscordBear.sln in that configuration (see the README in the DiscordBear repo)." />
   </Target>
   <ItemDefinitionGroup>
     <!-- Always copies, not only newer files (no /d): after switching between Debug and Release, the build being deployed is

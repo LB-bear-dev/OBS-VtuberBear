@@ -61,7 +61,7 @@
             <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
             <!-- ..\..\ for PCH.h and WatchedImage.h, ..\..\..\ for CharacterControlCore\WatchedFile.h; same libobs, psd_sdk and DiscordBear
                  header paths as the plugin. DiscordBear itself is not linked: VoiceRoster only uses its types. -->
-            <AdditionalIncludeDirectories>..\..\;..\..\..\;..\..\..\ThirdParty\googletest\googletest\include;..\..\..\ThirdParty\psd_sdk\src;..\..\..\ExternalDependencies\DiscordBear\include;$(OBSPATH)\..\libobs;$(OBSPATH)\config;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <AdditionalIncludeDirectories>..\..\;..\..\..\;..\..\..\ThirdParty\googletest\googletest\include;..\..\..\ThirdParty\psd_sdk\src;..\..\..\ThirdParty\DiscordBear\include;$(OBSPATH)\..\libobs;$(OBSPATH)\config;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
         </ClCompile>
         <Link>
             <SubSystem>Console</SubSystem>

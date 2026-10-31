@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Sets up everything OBS-VtuberBear.sln needs from outside the repo and records the paths in BearApps.user.props.
-    DiscordBear is not one of them: its prebuilt copy is checked in under ExternalDependencies\DiscordBear.
+    DiscordBear is not one of them: its prebuilt copy is checked in under ThirdParty\DiscordBear.
 
 .DESCRIPTION
     Run once after cloning; running it again is safe and only does what is still missing. CI runs this same script.

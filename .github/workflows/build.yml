@@ -74,7 +74,7 @@ jobs:
         working-directory: plugin
         run: ./scripts/setup-deps.ps1 -PythonPath $env:pythonLocation
 
-      # DiscordBear isn't built here: the plugin links the prebuilt copy checked in under ExternalDependencies/DiscordBear, and the
+      # DiscordBear isn't built here: the plugin links the prebuilt copy checked in under ThirdParty/DiscordBear, and the
       # build copies its DLL (not its PDB, which isn't shipped) into x64/<Configuration> for packaging. DiscordBear's own tests run in its own repo.
       - name: Build plugin
         working-directory: plugin

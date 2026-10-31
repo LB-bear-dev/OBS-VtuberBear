@@ -366,7 +366,7 @@ AGENTS.md
 # Per-machine dependency paths and the dependencies themselves (scripts/setup-deps.ps1)
 BearApps.user.props
 /deps/
-# DiscordBear's headers and Debug/Release binaries, staged by its own build (ExternalDependencies/DiscordBear/README.md) and
+# DiscordBear's headers and Debug/Release binaries, staged by its own build (see the DiscordBear repo README) and
 # checked in, so the ignores above for Debug/ and Release/ don't apply there
-!/ExternalDependencies/DiscordBear/Debug/
-!/ExternalDependencies/DiscordBear/Release/
+!/ThirdParty/DiscordBear/Debug/
+!/ThirdParty/DiscordBear/Release/
