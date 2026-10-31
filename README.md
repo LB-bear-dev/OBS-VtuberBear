@@ -8,7 +8,7 @@ This means characters do not require many system resources, resulting in a less 
 - Run `OBS-VtuberBear-<version>-windows-x64-setup.exe` from the release. For a portable OBS, change the folder on the installer's folder page to `<your OBS folder>\plugins\OBS-VtuberBear`.
 - To install by hand, extract the release zip into your root OBS directory and delete any older copy.
 
-###Requirements:
+### Requirements
 - OBS 33.0.0 and later
 - If you want to use the scripted characters, you need Python 3.8 or newer installed
 
