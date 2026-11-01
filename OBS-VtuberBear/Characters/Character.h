@@ -1,12 +1,15 @@
 #pragma once
-#include "Characters/Attribute.h"
+#include "CharacterRig/Attribute.h"
 #include "Python/WatchedPythonScript.h"
 #include "Render/ImageLayer.h"
 #include "Render/WatchedImage.h"
 
 namespace CharacterControlOBS
 {
-using AttributeMap = std::unordered_map<std::string, std::unique_ptr<Attribute<int>>>;
+using AttributeMap = std::unordered_map<StrId, std::unique_ptr<Attribute>>;
+
+void SetAttribute(const AttributeMap& Map, StrIdRef Name, const Attribute::Value& Value);
+
 class Component
 {
 public:
@@ -33,7 +36,7 @@ public:
 
 	void UpdateRenderState();
 
-	[[nodiscard]] const Attribute<int>* GetIntAttribute(StrIdRef AttrName) const;
+	[[nodiscard]] const Attribute* GetAttribute(StrIdRef AttrName) const;
 
 	void Render(const gs_effect_t* Effect) const;
 
@@ -42,7 +45,7 @@ public:
 private:
 	std::vector<std::unique_ptr<Component>> Components;
 
-	AttributeMap IntAttributes;
+	AttributeMap Attributes;
 
 	CharacterControlRender::ImageLayer ImageRoot;
 

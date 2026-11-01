@@ -117,7 +117,6 @@
         <ClInclude Include="PCH.h"/>
         <ClInclude Include="plugin-macros.h"/>
         <ClInclude Include="Characters\ActiveCharacters.h"/>
-        <ClInclude Include="Characters\Attribute.h"/>
         <ClInclude Include="Characters\Character.h"/>
         <ClInclude Include="Characters\CharacterSourceInfos.h"/>
         <ClInclude Include="Characters\CharacterSource.h"/>
@@ -133,6 +132,7 @@
         <ClInclude Include="Render\WatchedImage.h"/>
         <ClInclude Include="..\CharacterControlCore\CoreTypes.h"/>
         <ClInclude Include="..\CharacterControlCore\Messaging.h"/>
+        <ClInclude Include="..\CharacterControlCore\Overloaded.h"/>
         <ClInclude Include="..\CharacterControlCore\WatchedFile.h"/>
     </ItemGroup>
     <ItemGroup>

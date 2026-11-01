@@ -75,14 +75,19 @@
         </ClCompile>
     </ItemDefinitionGroup>
     <ItemGroup>
+        <ClCompile Include="Attribute.cpp" />
         <ClCompile Include="CharacterFile.cpp"/>
+        <ClCompile Include="Condition.cpp"/>
         <ClCompile Include="PathRules.cpp"/>
     </ItemGroup>
     <ItemGroup>
+        <ClInclude Include="Attribute.h" />
         <ClInclude Include="CharacterFile.h"/>
+        <ClInclude Include="Condition.h"/>
         <ClInclude Include="PathRules.h"/>
         <ClInclude Include="..\CharacterControlCore\CoreTypes.h"/>
         <ClInclude Include="..\CharacterControlCore\Messaging.h"/>
+        <ClInclude Include="..\CharacterControlCore\Overloaded.h"/>
     </ItemGroup>
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
     <ImportGroup Label="ExtensionTargets">

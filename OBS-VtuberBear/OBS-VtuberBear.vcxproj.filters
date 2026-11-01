@@ -66,9 +66,6 @@
     <ClInclude Include="Characters\ActiveCharacters.h">
       <Filter>Characters</Filter>
     </ClInclude>
-    <ClInclude Include="Characters\Attribute.h">
-      <Filter>Characters</Filter>
-    </ClInclude>
     <ClInclude Include="Characters\Character.h">
       <Filter>Characters</Filter>
     </ClInclude>
@@ -112,6 +109,9 @@
       <Filter>CharacterControlCore</Filter>
     </ClInclude>
     <ClInclude Include="..\CharacterControlCore\Messaging.h">
+      <Filter>CharacterControlCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CharacterControlCore\Overloaded.h">
       <Filter>CharacterControlCore</Filter>
     </ClInclude>
     <ClInclude Include="..\CharacterControlCore\WatchedFile.h">

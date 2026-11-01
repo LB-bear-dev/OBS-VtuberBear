@@ -8,6 +8,11 @@
     <PropertyGroup>
         <_BearIsThirdParty>$(MSBuildProjectDirectory.Contains('ThirdParty'))</_BearIsThirdParty>
     </PropertyGroup>
+    <ItemDefinitionGroup Condition="'$(_BearIsThirdParty)'!='True' and '$(PlatformToolset)'!='ClangCL'">
+        <ClCompile>
+            <AdditionalOptions>/w34062 %(AdditionalOptions)</AdditionalOptions>
+        </ClCompile>
+    </ItemDefinitionGroup>
     <PropertyGroup Condition="'$(StaticAnalysis)'=='true' and '$(_BearIsThirdParty)'!='True'">
         <RunCodeAnalysis>true</RunCodeAnalysis>
         <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>

@@ -10,9 +10,7 @@
 
 namespace CharacterControlOBS
 {
-// What every character source keeps between OBS callbacks. Update runs on another thread than tick and render, so the
-// settings (Name, Id, Size and the ones Source adds) are only touched with SettingsMutex held. Nothing may wait for the
-// graphics lock or take another lock while holding it, or the graphics thread and the updating one can deadlock.
+// What every character source keeps between OBS callbacks. Update runs on another thread than tick and render.
 struct CharacterSourceData
 {
 	CharacterSourceData() = default;
@@ -32,14 +30,7 @@ struct CharacterSourceData
 	std::atomic<bool> Active = false;
 };
 
-// The OBS source callbacks shared by the Discord character sources. Name and ID settings are read here,
-// Source derives from CharacterSourceData and provides the rest:
-//   static constexpr const char* DisplayName;
-//   static constexpr bool UpdatesRenderState;                 runs the character's image control script each tick
-//   static void AddProperties(obs_properties_t* properties);  every property, Name and ID included
-//   void LoadSettings(obs_data_t* settings);                  settings other than Name and ID
-//   void SetupImages(CharacterControlRender::ImageLayer& defaultLayer);
-//   bool IsLive() const;                                      while false the character is dropped, else it ticks while active
+// The OBS source callbacks shared by the Discord character sources. Name and ID settings are read here
 template<typename Source>
 class CharacterSource
 {
@@ -240,13 +231,12 @@ private:
 
 		auto* SourceData = static_cast<Source*>(Data);
 		// Declared before the lock so a removed character is destroyed after the lock is released
-		std::shared_ptr<Character> Removed;
 		std::shared_ptr<Character> ActiveCharacter;
 		{
 			const std::scoped_lock Lock(SourceData->SettingsMutex);
 			if(!SourceData->IsLive())
 			{
-				Removed = ActiveCharacters::Get().RemoveActiveCharacter(SourceData->Name);
+				ActiveCharacters::Get().RemoveActiveCharacter(SourceData->Name);
 				return;
 			}
 
@@ -272,19 +262,25 @@ private:
 			ActiveCharacter->UpdateRenderState();
 		}
 
-		if(const Attribute<int>* Attr = ActiveCharacter->GetIntAttribute("Talking"))
+		if(const Attribute* Attr = ActiveCharacter->GetAttribute("Talking"))
 		{
-			ActiveCharacter->GetImageRoot().SetSlot("SpeakingState", Attr->GetValue() == 0 ? "SILENT" : "TALK");
+			if(const bool* Talking = Attr->Get<bool>())
+			{
+				ActiveCharacter->GetImageRoot().SetSlot("SpeakingState", *Talking ? "TALK" : "SILENT");
+			}
 		}
 
-		if(const Attribute<int>* Attr = ActiveCharacter->GetIntAttribute("InCall"))
+		if(const Attribute* Attr = ActiveCharacter->GetAttribute("InCall"))
 		{
-			if(Attr->GetValue() > 0)
+			if(const bool* InCall = Attr->Get<bool>())
 			{
-				ActiveCharacter->GetImageRoot().Activate();
-			} else
-			{
-				ActiveCharacter->GetImageRoot().Deactivate();
+				if(*InCall)
+				{
+					ActiveCharacter->GetImageRoot().Activate();
+				} else
+				{
+					ActiveCharacter->GetImageRoot().Deactivate();
+				}
 			}
 		}
 	}

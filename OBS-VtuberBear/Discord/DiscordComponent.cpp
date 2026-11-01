@@ -19,29 +19,19 @@ std::optional<bool> GetSpeaking(const std::string& Id)
 
 void CharacterControlOBS::DiscordComponent::DeclareAttributes(AttributeMap& Map)
 {
-	Map.try_emplace("Talking", std::make_unique<Attribute<int>>(0, 0, 1));
-	Map.try_emplace("InCall", std::make_unique<Attribute<int>>(0, 0, 1));
+	Map.try_emplace("Talking", std::make_unique<Attribute>(false));
+	Map.try_emplace("InCall", std::make_unique<Attribute>(false));
 }
 
 void CharacterControlOBS::DiscordComponent::UpdateAttributes(const AttributeMap& Map)
 {
 	if(const std::optional<bool> Speaking = GetSpeaking(Id))
 	{
-		if(const auto Talking = Map.find("Talking"); Talking != Map.end())
-		{
-			Talking->second->SetValue(*Speaking);
-		}
-
-		if(const auto InCall = Map.find("InCall"); InCall != Map.end())
-		{
-			InCall->second->SetValue(true);
-		}
+		SetAttribute(Map, "Talking", *Speaking);
+		SetAttribute(Map, "InCall", true);
 	} else
 	{
-		if(const auto InCall = Map.find("InCall"); InCall != Map.end())
-		{
-			InCall->second->SetValue(false);
-		}
+		SetAttribute(Map, "InCall", false);
 	}
 }
 

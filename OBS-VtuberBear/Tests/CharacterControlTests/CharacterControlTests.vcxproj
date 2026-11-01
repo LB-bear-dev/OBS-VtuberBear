@@ -77,9 +77,11 @@
         </Link>
     </ItemDefinitionGroup>
     <ItemGroup>
+        <ClCompile Include="AttributeTests.cpp" />
         <ClCompile Include="main.cpp"/>
         <ClCompile Include="ObsStubs.cpp"/>
         <ClCompile Include="CharacterFileTests.cpp"/>
+        <ClCompile Include="ConditionTests.cpp"/>
         <ClCompile Include="PathRulesTests.cpp"/>
         <ClCompile Include="VoiceRosterTests.cpp"/>
         <ClCompile Include="PsdFuzzTests.cpp" />
