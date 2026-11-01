@@ -1,7 +1,7 @@
 // Who is in the voice channel and who is speaking, as the speaking source's events leave it
-#include <gtest/gtest.h>
 #include <string>
 #include <vector>
+#include <gtest/gtest.h>
 #include "PCH.h"
 #include "Discord/VoiceRoster.h"
 

@@ -10,7 +10,7 @@ template<typename T>
 class WatchedFile
 {
 public:
-	WatchedFile(std::filesystem::path Filename) : Filename(std::move(Filename)), LastChangedTime(), LastUpdate(std::chrono::system_clock::duration::zero()), UpdateInterval(10s) {}
+	explicit WatchedFile(std::filesystem::path Filename) : Filename(std::move(Filename)), LastUpdate(std::chrono::system_clock::duration::zero()), UpdateInterval(10s) {}
 
 	WatchedFile(const WatchedFile&) = delete;
 	WatchedFile& operator=(const WatchedFile&) = delete;
@@ -36,10 +36,9 @@ public:
 
 		LastUpdate = std::chrono::system_clock::now();
 
-		if(std::filesystem::exists(Filename))
+		if(exists(Filename))
 		{
-			auto Duration = std::filesystem::last_write_time(Filename) - LastChangedTime;
-			if(Duration > std::chrono::system_clock::duration::zero())
+			if(const auto Duration = last_write_time(Filename) - LastChangedTime; Duration > std::chrono::system_clock::duration::zero())
 			{
 				DisposeInternal();
 				File = std::make_unique<T>();
@@ -48,7 +47,7 @@ public:
 					File = nullptr;
 					return false;
 				}
-				LastChangedTime = std::filesystem::last_write_time(Filename);
+				LastChangedTime = last_write_time(Filename);
 				return true;
 			}
 		}

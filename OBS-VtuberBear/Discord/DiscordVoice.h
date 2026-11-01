@@ -30,7 +30,9 @@ public:
 	static void Shutdown();
 
 	DiscordVoice(const DiscordVoice&) = delete;
+	DiscordVoice(DiscordVoice&&) = delete;
 	DiscordVoice& operator=(const DiscordVoice&) = delete;
+	DiscordVoice& operator=(DiscordVoice&&) = delete;
 	~DiscordVoice();
 
 	// Whether the user is speaking, empty while they aren't in the call

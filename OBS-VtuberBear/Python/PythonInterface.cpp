@@ -33,8 +33,7 @@ std::vector<FilePath> ObsPythonFolders()
 		config_t* Config = nullptr;
 		if(config_open(&Config, ConfigPath, CONFIG_OPEN_EXISTING) == CONFIG_SUCCESS)
 		{
-			const char* Folder = config_get_string(Config, "Python", "Path64bit");
-			if(Folder != nullptr && *Folder != '\0')
+			if(const char* Folder = config_get_string(Config, "Python", "Path64bit"); Folder != nullptr && *Folder != '\0')
 			{
 				Folders.emplace_back(std::u8string(reinterpret_cast<const char8_t*>(Folder)));
 			}
@@ -57,8 +56,7 @@ PythonInterface* PythonInterface::TryGet()
 	std::call_once(Started,
 		[]
 		{
-			std::unique_ptr<PythonInterface> Interface(new PythonInterface());
-			if(Interface->Start())
+			if(std::unique_ptr<PythonInterface> Interface(new PythonInterface()); Interface->Start())
 			{
 				Singleton = std::move(Interface);
 			}
@@ -105,7 +103,7 @@ bool PythonInterface::Start()
 	// OBS's Python scripting may have started the interpreter already. Share it rather than starting a second one
 	if(Py_IsInitialized())
 	{
-		ScopedGil Gil;
+		const ScopedGil Gil;
 		AddToSysPath(CharacterControlOBS::GetGlobalSettingsPath().value_or(""));
 		return true;
 	}
@@ -137,18 +135,17 @@ bool PythonInterface::Start()
 	}
 
 	// Scripts sit next to the settings, so they come first on the import path
-	auto SettingsPath = CharacterControlOBS::GetGlobalSettingsPath();
-	if(SettingsPath.has_value() && !SettingsPath->empty())
+	if(const auto SettingsPath = CharacterControlOBS::GetGlobalSettingsPath(); SettingsPath.has_value() && !SettingsPath->empty())
 	{
 		AddToSysPath(*SettingsPath, true);
 	}
 
 	/* Setup the __main__ module for us to use */
-	auto MainModule = PyImport_ImportModule("__main__");
-	auto MainDict = PyModule_GetDict(MainModule);
+	auto* const MainModule = PyImport_ImportModule("__main__");
+	auto* const MainDict = PyModule_GetDict(MainModule);
 
 	/* Fetch the sys module */
-	auto SysModule = PyImport_ImportModule("sys");
+	auto* const SysModule = PyImport_ImportModule("sys");
 
 	/* Attach the sys module into the __main__ namespace */
 	PyDict_SetItemString(MainDict, "sys", SysModule);

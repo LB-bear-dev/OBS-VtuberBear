@@ -27,24 +27,18 @@ void CharacterControlOBS::DiscordComponent::UpdateAttributes(const AttributeMap&
 {
 	if(const std::optional<bool> Speaking = GetSpeaking(Id))
 	{
-		auto Talking = Map.find("Talking");
-
-		if(Talking != Map.end())
+		if(const auto Talking = Map.find("Talking"); Talking != Map.end())
 		{
 			Talking->second->SetValue(*Speaking);
 		}
 
-		auto InCall = Map.find("InCall");
-
-		if(InCall != Map.end())
+		if(const auto InCall = Map.find("InCall"); InCall != Map.end())
 		{
 			InCall->second->SetValue(true);
 		}
 	} else
 	{
-		auto InCall = Map.find("InCall");
-
-		if(InCall != Map.end())
+		if(const auto InCall = Map.find("InCall"); InCall != Map.end())
 		{
 			InCall->second->SetValue(false);
 		}

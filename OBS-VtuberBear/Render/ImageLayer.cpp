@@ -3,7 +3,7 @@
 
 using namespace CharacterControlRender;
 
-ImageLayer::ImageLayer() : Translation({0, 0}), Scale({1, 1}) {}
+ImageLayer::ImageLayer() : Translation({.X = 0, .Y = 0}), Scale({.X = 1, .Y = 1}) {}
 
 void ImageLayer::CreateChildLayer(StrIdRef Layer)
 {
@@ -14,7 +14,7 @@ void ImageLayer::CreateChildLayer(StrIdRef Layer)
 
 void ImageLayer::CreateSlot(StrIdRef Slot)
 {
-	SlotNames.push_back({Slot, ""});
+	SlotNames.push_back({.Slot = Slot, .Name = ""});
 	for(ImageLayer& Layer : ChildLayersByZOrder)
 	{
 		Layer.CreateSlot(Slot);
@@ -61,7 +61,7 @@ void ImageLayer::AddLayersFromFile(FilePathRef Path, const Coord& Offset)
 		ImageLayer& Child = ChildLayersByZOrder.emplace_back();
 		Child.LayerName = Entry->first;
 		Child.ActiveImageName = Entry->first;
-		Child.Translation = {Entry->second.Offset.X + Offset.X, Entry->second.Offset.Y + Offset.Y};
+		Child.Translation = {.X = Entry->second.Offset.X + Offset.X, .Y = Entry->second.Offset.Y + Offset.Y};
 		Child.AddImageLibraryToLayer(Path);
 	}
 }
@@ -76,7 +76,7 @@ void ImageLayer::Deactivate()
 	Active = false;
 }
 
-void ImageLayer::Render(gs_effect_t* Effect) const
+void ImageLayer::Render(const gs_effect_t* Effect) const
 {
 	if(!Active)
 	{
@@ -96,31 +96,9 @@ void ImageLayer::Render(gs_effect_t* Effect) const
 	gs_enable_framebuffer_srgb(Previous);
 }
 
-void ImageLayer::RenderTree(gs_eparam_t* ImageParam) const
-{
-	gs_matrix_push();
-	gs_matrix_translate3f(Translation.X, Translation.Y, 0);
-
-	if(ActiveImage != nullptr)
-	{
-		if(gs_texture_t* Texture = ActiveImage->texture)
-		{
-			gs_effect_set_texture_srgb(ImageParam, Texture);
-			gs_draw_sprite(Texture, 0, ActiveImage->cx, ActiveImage->cy);
-		}
-	}
-
-	uint32_t Index = 0;
-	while(auto Layer = GetNextActiveChildLayer(Index))
-	{
-		Layer->RenderTree(ImageParam);
-	}
-	gs_matrix_pop();
-}
-
 ImageLayer* ImageLayer::GetLayerByName(StrIdRef Name)
 {
-	auto FoundLayer = std::ranges::find_if(ChildLayersByZOrder,
+	const auto FoundLayer = std::ranges::find_if(ChildLayersByZOrder,
 		[&Name](const ImageLayer& Layer)
 		{
 			return Layer.LayerName == Name;
@@ -138,7 +116,7 @@ Coord ImageLayer::GetMaxResolution() const
 {
 	Coord MaxRes = ImageLibraries.GetMaxResolution();
 
-	for(auto& ChildLayer : ChildLayersByZOrder)
+	for(const auto& ChildLayer : ChildLayersByZOrder)
 	{
 		auto [X, Y] = ChildLayer.GetMaxResolution();
 		MaxRes.X = std::max(MaxRes.X, X);
@@ -215,6 +193,28 @@ const ImageLayer* ImageLayer::GetNextActiveChildLayer(uint32_t& StartIndex) cons
 	return nullptr;
 }
 
+void ImageLayer::RenderTree(gs_eparam_t* ImageParam) const
+{
+	gs_matrix_push();
+	gs_matrix_translate3f(Translation.X, Translation.Y, 0);
+
+	if(ActiveImage != nullptr)
+	{
+		if(gs_texture_t* Texture = ActiveImage->texture)
+		{
+			gs_effect_set_texture_srgb(ImageParam, Texture);
+			gs_draw_sprite(Texture, 0, ActiveImage->cx, ActiveImage->cy);
+		}
+	}
+
+	uint32_t Index = 0;
+	while(const auto* Layer = GetNextActiveChildLayer(Index))
+	{
+		Layer->RenderTree(ImageParam);
+	}
+	gs_matrix_pop();
+}
+
 // Picks the first image whose name contains every slot's current value
 void ImageLayer::RefreshActiveImageFromSlots()
 {
@@ -222,7 +222,7 @@ void ImageLayer::RefreshActiveImageFromSlots()
 
 	for(const std::string& ImageName : ImageLibraries.GetValidImageNames())
 	{
-		bool MatchesAllSlots = std::ranges::all_of(SlotNames,
+		const bool MatchesAllSlots = std::ranges::all_of(SlotNames,
 			[&ImageName](const SlotName& SlotEntry)
 			{
 				return ImageName.find(SlotEntry.Name) != std::string::npos;

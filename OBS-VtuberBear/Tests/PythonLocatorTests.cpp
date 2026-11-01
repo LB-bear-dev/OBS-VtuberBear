@@ -1,11 +1,11 @@
 // Each scenario runs the probe (Probe.h) in a child process, because a process can only be bound to one Python and the
 // scenarios differ in what Python the process can see. The Python they find is the one in PYTHONPATH, the same one
 // the plugin is built against, so the tests behave the same on a machine with any Python 3.8 or newer.
-#include <gtest/gtest.h>
 #include <array>
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <gtest/gtest.h>
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
@@ -63,7 +63,7 @@ ProbeRun RunProbeProcess(const std::vector<std::wstring>& Args, const std::wstri
 		CommandLine += L" \"" + Arg + L"\"";
 	}
 
-	SECURITY_ATTRIBUTES Inheritable = {sizeof(Inheritable), nullptr, TRUE};
+	SECURITY_ATTRIBUTES Inheritable = {.nLength = sizeof(Inheritable), .lpSecurityDescriptor = nullptr, .bInheritHandle = TRUE};
 	HANDLE Read = nullptr;
 	HANDLE Write = nullptr;
 	if(!CreatePipe(&Read, &Write, &Inheritable, 0))
@@ -72,7 +72,7 @@ ProbeRun RunProbeProcess(const std::vector<std::wstring>& Args, const std::wstri
 	}
 	SetHandleInformation(Read, HANDLE_FLAG_INHERIT, 0);
 
-	STARTUPINFOW Startup = {sizeof(Startup)};
+	STARTUPINFOW Startup = {.cb = sizeof(Startup)};
 	Startup.dwFlags = STARTF_USESTDHANDLES;
 	Startup.hStdOutput = Write;
 	Startup.hStdError = Write;
@@ -111,7 +111,7 @@ bool Contains(const std::string& Text, const std::string& Part)
 class PythonLocatorTest : public testing::Test
 {
 protected:
-	virtual void SetUp() override
+	void SetUp() override
 	{
 		PythonHome = std::filesystem::path(WIDE_TEXT(PYTHON_HOME_DIR)).make_preferred();
 		Minor = InstalledMinor(PythonHome);
@@ -119,12 +119,12 @@ protected:
 		PythonDll = PythonHome / (L"python3" + std::to_wstring(Minor) + L".dll");
 	}
 
-	virtual void TearDown() override
+	void TearDown() override
 	{
-		std::error_code Error;
 		if(!Broken.empty())
 		{
-			std::filesystem::remove_all(Broken, Error);
+			std::error_code Error;
+			remove_all(Broken, Error);
 		}
 	}
 
@@ -132,12 +132,12 @@ protected:
 	std::wstring MakeBrokenInstall()
 	{
 		Broken = std::filesystem::temp_directory_path() / (L"PythonLocatorTests-" + std::to_wstring(GetCurrentProcessId()));
-		std::filesystem::create_directories(Broken);
-		std::filesystem::copy_file(PythonDll, Broken / PythonDll.filename(), std::filesystem::copy_options::overwrite_existing);
+		create_directories(Broken);
+		copy_file(PythonDll, Broken / PythonDll.filename(), std::filesystem::copy_options::overwrite_existing);
 		return Broken.wstring();
 	}
 
-	std::wstring PathWithPython() const
+	[[nodiscard]] std::wstring PathWithPython() const
 	{
 		return SystemFolders() + L";" + PythonHome.wstring();
 	}
@@ -151,23 +151,23 @@ protected:
 
 TEST_F(PythonLocatorTest, NoPythonAnywhere)
 {
-	const ProbeRun Run = RunProbeProcess({L"noreg"}, SystemFolders());
-	EXPECT_EQ(Run.ExitCode, 2u) << Run.Output;
-	EXPECT_TRUE(Contains(Run.Output, "RESULT: no usable Python")) << Run.Output;
+	const auto [ExitCode, Output] = RunProbeProcess({L"noreg"}, SystemFolders());
+	EXPECT_EQ(ExitCode, 2u) << Output;
+	EXPECT_TRUE(Contains(Output, "RESULT: no usable Python")) << Output;
 }
 
 TEST_F(PythonLocatorTest, FindsPythonOnPath)
 {
-	const ProbeRun Run = RunProbeProcess({L"noreg"}, PathWithPython());
-	EXPECT_EQ(Run.ExitCode, 0u) << Run.Output;
-	EXPECT_TRUE(Contains(Run.Output, "RESULT: bound Python 3." + std::to_string(Minor))) << Run.Output;
-	EXPECT_TRUE(Contains(Run.Output, "PYTHON OK")) << Run.Output;
+	const auto [ExitCode, Output] = RunProbeProcess({L"noreg"}, PathWithPython());
+	EXPECT_EQ(ExitCode, 0u) << Output;
+	EXPECT_TRUE(Contains(Output, "RESULT: bound Python 3." + std::to_string(Minor))) << Output;
+	EXPECT_TRUE(Contains(Output, "PYTHON OK")) << Output;
 }
 
 // Starting a Python that can't find its standard library aborts the whole process, so it must be passed over instead
 TEST_F(PythonLocatorTest, SkipsPythonWithoutStandardLibrary)
 {
-	const ProbeRun Run = RunProbeProcess({L"noreg", L"prefer=" + MakeBrokenInstall()}, SystemFolders());
-	EXPECT_EQ(Run.ExitCode, 2u) << Run.Output;
-	EXPECT_TRUE(Contains(Run.Output, "no standard library found")) << Run.Output;
+	const auto [ExitCode, Output] = RunProbeProcess({L"noreg", L"prefer=" + MakeBrokenInstall()}, SystemFolders());
+	EXPECT_EQ(ExitCode, 2u) << Output;
+	EXPECT_TRUE(Contains(Output, "no standard library found")) << Output;
 }

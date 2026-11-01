@@ -7,7 +7,7 @@
 // libobs util/util_uint64.h
 static inline unsigned __int64 _udiv128(unsigned __int64 high, unsigned __int64 low, unsigned __int64 divisor, unsigned __int64* remainder)
 {
-	const unsigned __int128 dividend = (static_cast<unsigned __int128>(high) << 64) | low;
+	const unsigned __int128 dividend = (static_cast<unsigned __int128>(high) << 64u) | low;
 	*remainder = static_cast<unsigned __int64>(dividend % divisor);
 	return static_cast<unsigned __int64>(dividend / divisor);
 }

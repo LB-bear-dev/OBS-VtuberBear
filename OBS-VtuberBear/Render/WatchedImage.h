@@ -21,29 +21,36 @@ using FileImageLibrary = std::unordered_map<StrId, FileLayer>;
 class WatchedFileImageLibrary final : public CharacterControlCore::WatchedFile<FileImageLibrary>
 {
 public:
-	WatchedFileImageLibrary(FilePathRef Filename) : WatchedFile(Filename), MaxResolution{0, 0}
+	explicit WatchedFileImageLibrary(FilePathRef Filename) : WatchedFile(Filename), MaxResolution{.X = 0, .Y = 0}
 	{
 		Update();
 	}
 
-	WatchedFileImageLibrary(FilePathRef Filename, StrId OverrideName) : WatchedFile(Filename), OverrideName(std::move(OverrideName)), MaxResolution{0, 0}
+	WatchedFileImageLibrary(FilePathRef Filename, StrId OverrideName) : WatchedFile(Filename), OverrideName(std::move(OverrideName)), MaxResolution{.X = 0, .Y = 0}
 	{
 		Update();
 	}
 
 	// WatchedFile's destructor can't reach our DisposeInternal override, so free the textures here.
-	virtual ~WatchedFileImageLibrary() override
+	~WatchedFileImageLibrary() override
 	{
-		DisposeInternal();
+		WatchedFileImageLibrary::DisposeInternal();
 	}
+
+	WatchedFileImageLibrary(const WatchedFileImageLibrary&) = delete;
+	WatchedFileImageLibrary(WatchedFileImageLibrary&&) = delete;
+	WatchedFileImageLibrary& operator=(const WatchedFileImageLibrary&) = delete;
+	WatchedFileImageLibrary& operator=(WatchedFileImageLibrary&&) = delete;
 
 	[[nodiscard]] const std::vector<StrId>& GetImageNames() const;
 
 	[[nodiscard]] Coord GetMaxResolution() const;
 
+protected:
+	bool UpdateInternal() override;
+	void DisposeInternal() override;
+
 private:
-	virtual bool UpdateInternal() override;
-	virtual void DisposeInternal() override;
 	std::vector<StrId> ImageNames;
 	StrId OverrideName;
 

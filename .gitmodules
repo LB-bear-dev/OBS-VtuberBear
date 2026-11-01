@@ -4,3 +4,4 @@
 [submodule "ThirdParty/psd_sdk"]
 	path = ThirdParty/psd_sdk
 	url = https://github.com/MolecularMatters/psd_sdk.git
+	ignore = dirty

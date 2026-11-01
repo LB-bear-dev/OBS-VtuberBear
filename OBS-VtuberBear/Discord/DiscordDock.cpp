@@ -1,5 +1,7 @@
 #include "PCH.h"
 #include "Discord/DiscordDock.h"
+#include <obs-module.h>
+#include <windows.h>
 #include <QtCore/QTimer>
 #include <QtWidgets/QAbstractItemView>
 #include <QtWidgets/QCheckBox>
@@ -9,10 +11,8 @@
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QStyle>
 #include <QtWidgets/QToolButton>
-#include <obs-module.h>
-#include <windows.h>
-#include "Discord/DiscordVoice.h"
 #include "CharacterControlCore/Messaging.h"
+#include "Discord/DiscordVoice.h"
 
 using namespace CharacterControlOBS;
 using DiscordBear::SpeakingStatus;
@@ -121,9 +121,8 @@ const char* StatusColour(const SpeakingStatus Status)
 class DiscordDock final : public QWidget
 {
 public:
-	explicit DiscordDock(QWidget* Parent) : QWidget(Parent)
+	explicit DiscordDock(QWidget* Parent) : QWidget(Parent), StatusDot(new QLabel(this))
 	{
-		StatusDot = new QLabel(this);
 		StatusDot->setFixedSize(STATUS_DOT_SIZE, STATUS_DOT_SIZE);
 		FollowBox = new QCheckBox(Text("Follow me"), this);
 		FollowBox->setToolTip(Text("Follow me into whichever voice channel I join"));
@@ -148,38 +147,56 @@ public:
 		Layout->addWidget(AuthorizeButton);
 		setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
 
-		connect(FollowBox, &QCheckBox::toggled, this, [](const bool Checked)
-		{
-			if(DiscordVoice* Voice = DiscordVoice::Get())
+		connect(FollowBox,
+			&QCheckBox::toggled,
+			this,
+			[](const bool Checked)
 			{
-				Voice->SetFollowUser(Checked);
-			}
-		});
-		connect(ServerBox, &QComboBox::activated, this, [this](const int Index)
-		{
-			OnServerPicked(Index);
-		});
-		connect(ChannelBox, &QComboBox::activated, this, [this](const int Index)
-		{
-			OnChannelPicked(Index);
-		});
-		connect(RefreshButton, &QToolButton::clicked, this, [this]
-		{
-			RequestLists();
-		});
-		connect(AuthorizeButton, &QToolButton::clicked, this, []
-		{
-			if(const DiscordVoice* Voice = DiscordVoice::Get())
+				if(DiscordVoice* Voice = DiscordVoice::Get())
+				{
+					Voice->SetFollowUser(Checked);
+				}
+			});
+		connect(ServerBox,
+			&QComboBox::activated,
+			this,
+			[this](const int Index)
 			{
-				Voice->ShowSetup();
-			}
-		});
+				OnServerPicked(Index);
+			});
+		connect(ChannelBox,
+			&QComboBox::activated,
+			this,
+			[this](const int Index)
+			{
+				OnChannelPicked(Index);
+			});
+		connect(RefreshButton,
+			&QToolButton::clicked,
+			this,
+			[this]
+			{
+				RequestLists();
+			});
+		connect(AuthorizeButton,
+			&QToolButton::clicked,
+			this,
+			[]
+			{
+				if(const DiscordVoice* Voice = DiscordVoice::Get())
+				{
+					Voice->ShowSetup();
+				}
+			});
 
 		auto* Timer = new QTimer(this);
-		connect(Timer, &QTimer::timeout, this, [this]
-		{
-			Refresh();
-		});
+		connect(Timer,
+			&QTimer::timeout,
+			this,
+			[this]
+			{
+				Refresh();
+			});
 		Timer->start(REFRESH_MILLISECONDS);
 
 		Refresh();
@@ -233,7 +250,7 @@ private:
 
 	void Refresh()
 	{
-		DiscordVoice* Voice = DiscordVoice::Get();
+		const DiscordVoice* Voice = DiscordVoice::Get();
 		setEnabled(Voice != nullptr);
 
 		if(Voice == nullptr)
@@ -241,12 +258,12 @@ private:
 			return;
 		}
 
-		const DiscordVoice::Settings Settings = Voice->GetSettings();
+		const auto [Guild, Channel, FollowUser] = Voice->GetSettings();
 
 		// The server shown starts as the saved one. Picking another only saves it once a channel in it is picked.
 		if(!PickedGuildLoaded)
 		{
-			PickedGuild = Settings.Guild;
+			PickedGuild = Guild;
 			PickedGuildLoaded = true;
 		}
 
@@ -254,21 +271,18 @@ private:
 
 		{
 			const QSignalBlocker Blocker(FollowBox);
-			FollowBox->setChecked(Settings.FollowUser);
+			FollowBox->setChecked(FollowUser);
 		}
 
-		ServerBox->setEnabled(!Settings.FollowUser);
-		ChannelBox->setEnabled(!Settings.FollowUser);
+		ServerBox->setEnabled(!FollowUser);
+		ChannelBox->setEnabled(!FollowUser);
 
 		if(const uint64_t Version = Voice->GetListsVersion(); Version != ShownListsVersion || PickedGuild != ShownChannelsGuild)
 		{
 			const std::optional<std::vector<DiscordBear::NamedId>> Channels = Voice->GetVoiceChannels(PickedGuild);
 			const QString ChannelPlaceholder = PickedGuild.empty() || Channels ? Text("Channel") : Text("Loading...");
 			const bool ServersFilled = FillComboBox(ServerBox, Text("Server"), Voice->GetServers(), PickedGuild);
-			const bool ChannelsFilled = FillComboBox(ChannelBox, ChannelPlaceholder, Channels.value_or(std::vector<DiscordBear::NamedId>()),
-				PickedGuild == Settings.Guild ? Settings.Channel : std::string());
-
-			if(ServersFilled && ChannelsFilled)
+			if(const bool ChannelsFilled = FillComboBox(ChannelBox, ChannelPlaceholder, Channels.value_or(std::vector<DiscordBear::NamedId>()), PickedGuild == Guild ? Channel : std::string()); ServersFilled && ChannelsFilled)
 			{
 				ShownListsVersion = Version;
 				ShownChannelsGuild = PickedGuild;
@@ -276,20 +290,18 @@ private:
 		}
 	}
 
-	void RefreshStatus(const DiscordVoice& Voice)
+	void RefreshStatus(const DiscordVoice& Voice) const
 	{
 		const SpeakingStatus Status = Voice.GetStatus();
 		const DiscordBear::WatchedChannel Watched = Voice.GetWatched();
-		QString ToolTip = Text("Discord voice") + ": " + QString::fromUtf8(DiscordBear::GetStatusText(Status));
+		QString ToolTip = Text("Discord voice") + ": " + QString::fromUtf8(GetStatusText(Status));
 
 		if(!Watched.Channel.empty())
 		{
 			ToolTip += "\n" + Text("Watching") + ": " + QString::fromStdString(Watched.Name.empty() ? Watched.Channel : Watched.Name);
 		}
 
-		const std::vector<VoiceRoster::MemberState> Members = Voice.GetMembers();
-
-		if(!Members.empty())
+		if(const std::vector<VoiceRoster::MemberState> Members = Voice.GetMembers(); !Members.empty())
 		{
 			ToolTip += "\n\n" + Text("In the call") + ":";
 
@@ -304,9 +316,7 @@ private:
 			StatusDot->setToolTip(ToolTip);
 		}
 
-		const QString DotStyle = QString("background-color: %1; border-radius: %2px;").arg(StatusColour(Status)).arg(STATUS_DOT_SIZE / 2);
-
-		if(StatusDot->styleSheet() != DotStyle)
+		if(const QString DotStyle = QString("background-color: %1; border-radius: %2px;").arg(StatusColour(Status)).arg(STATUS_DOT_SIZE / 2); StatusDot->styleSheet() != DotStyle)
 		{
 			StatusDot->setStyleSheet(DotStyle);
 		}
@@ -359,9 +369,7 @@ void CharacterControlOBS::AddDiscordDock()
 	}
 
 	// OBS takes the dock over and deletes it with the main window
-	auto* Dock = new DiscordDock(MainWindow);
-
-	if(!AddDockById(DOCK_ID, obs_module_text("Discord Voice"), Dock))
+	if(auto* Dock = new DiscordDock(MainWindow); !AddDockById(DOCK_ID, obs_module_text("Discord Voice"), Dock))
 	{
 		WARN_("OBS wouldn't add the Discord Voice dock.");
 		delete Dock;

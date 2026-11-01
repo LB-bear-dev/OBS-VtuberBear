@@ -1,19 +1,23 @@
 // Reading a character's character.json. The rule that keeps its paths inside the character's folder is tested in PathRulesTests.cpp.
 // Problems go to the log through blog(), which ObsStubs.h records.
-#include <gtest/gtest.h>
 #include <filesystem>
 #include <string>
-#include "PCH.h"
-#include "CharacterRig/CharacterFile.h"
+#include <gtest/gtest.h>
 #include "ObsStubs.h"
+#include "PCH.h"
 #include "TestSupport.h"
+#include "CharacterRig/CharacterFile.h"
 
 using namespace CharacterControlOBS;
 using namespace CharacterControlTests;
 
 namespace
 {
-const FilePath FOLDER = FilePath(L"C:\\Characters\\123456789012345678");
+const FilePath& CharacterFolder()
+{
+	static const FilePath FOLDER(L"C:\\Characters\\123456789012345678");
+	return FOLDER;
+}
 
 class CharacterFileTest : public testing::Test
 {
@@ -25,7 +29,7 @@ protected:
 
 	static std::optional<CharacterFile> Parse(const Str& Text)
 	{
-		return ParseCharacterFile(Text, FOLDER);
+		return ParseCharacterFile(Text, CharacterFolder());
 	}
 
 	// The text is refused, and the log names the file and says why
@@ -47,8 +51,8 @@ TEST_F(CharacterFileTest, ReadsEveryField)
 
 	ASSERT_TRUE(Character);
 	EXPECT_EQ(Character->Name, "Bear");
-	EXPECT_EQ(Character->Script, FOLDER / "control.py");
-	EXPECT_EQ(Character->BaseStyle, FOLDER / "styles" / "default.json");
+	EXPECT_EQ(Character->Script, CharacterFolder() / "control.py");
+	EXPECT_EQ(Character->BaseStyle, CharacterFolder() / "styles" / "default.json");
 	EXPECT_TRUE(ObsStubs::LogMessages().empty());
 }
 
@@ -77,11 +81,9 @@ TEST_F(CharacterFileTest, SaysWhatIsWrongWithAField)
 {
 	ExpectRefused(R"({"base": "default.json"})", "\"script\" is missing.");
 	ExpectRefused(R"({"script": 5, "base": "default.json"})", "\"script\" must be a string.");
-	ExpectRefused(R"({"script": "../control.py", "base": "default.json"})",
-		"\"script\" must be a path inside the character's folder, not \"../control.py\".");
+	ExpectRefused(R"({"script": "../control.py", "base": "default.json"})", "\"script\" must be a path inside the character's folder, not \"../control.py\".");
 	ExpectRefused(R"({"script": "control.py"})", "\"base\" is missing.");
-	ExpectRefused(R"({"script": "control.py", "base": "\\\\server\\share\\default.json"})",
-		"\"base\" must be a path inside the character's folder, not \"\\\\server\\share\\default.json\".");
+	ExpectRefused(R"({"script": "control.py", "base": "\\\\server\\share\\default.json"})", "\"base\" must be a path inside the character's folder, not \"\\\\server\\share\\default.json\".");
 	ExpectRefused(R"({"name": 5, "script": "control.py", "base": "default.json"})", "\"name\" must be a string.");
 }
 
@@ -89,7 +91,7 @@ TEST_F(CharacterFileTest, LoadsTheFoldersCharacterJson)
 {
 	const TempDir Dir;
 	const FilePath Folder = Dir.File("234567890123456789");
-	std::filesystem::create_directories(Folder);
+	create_directories(Folder);
 	WriteText(Folder / "character.json", R"({"script": "control.py", "base": "styles/default.json"})");
 
 	const std::optional<CharacterFile> Character = LoadCharacterFile(Folder);

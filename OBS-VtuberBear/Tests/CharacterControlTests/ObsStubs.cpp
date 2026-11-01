@@ -58,7 +58,7 @@ void blog(const int LogLevel, const char* Format, ...)
 	std::array<char, 1024> Buffer = {};
 	va_list Args;
 	va_start(Args, Format);
-	vsnprintf(Buffer.data(), Buffer.size(), Format, Args);
+	static_cast<void>(vsnprintf(Buffer.data(), Buffer.size(), Format, Args));
 	va_end(Args);
 
 	Messages().emplace_back(Buffer.data());
@@ -74,12 +74,12 @@ void bfree(void* Ptr)
 	free(Ptr);
 }
 
-void obs_enter_graphics(void) {}
+void obs_enter_graphics() {}
 
-void obs_leave_graphics(void) {}
+void obs_leave_graphics() {}
 
 // Plain image files (not PSDs) are not under test, so none of them load
-void gs_image_file_ex_init(gs_image_file_ex_t* Image, const char* File, const enum gs_image_alpha_mode AlphaMode)
+void gs_image_file_ex_init(gs_image_file_ex_t* Image, const char* File, const gs_image_alpha_mode AlphaMode)
 {
 	(void)File;
 
@@ -87,16 +87,16 @@ void gs_image_file_ex_init(gs_image_file_ex_t* Image, const char* File, const en
 	Image->alpha_mode = AlphaMode;
 }
 
-void gs_image_file_ex_init_texture(gs_image_file_ex_t* Image)
-{
-	(void)Image;
-
-	++Uploads;
-}
-
 void gs_image_file_ex_free(gs_image_file_ex_t* Image)
 {
 	bfree(Image->texture_data);
 	Image->texture_data = nullptr;
 	Image->loaded = false;
+}
+
+void gs_image_file_ex_init_texture(gs_image_file_ex_t* Image)
+{
+	(void)Image;
+
+	++Uploads;
 }

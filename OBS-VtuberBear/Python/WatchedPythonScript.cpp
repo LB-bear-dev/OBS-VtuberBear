@@ -9,12 +9,11 @@ PyObject* CharacterControlScript::WatchedPythonScript::Call(const std::string& F
 		return nullptr;
 	}
 
-	ScopedGil Gil;
+	const ScopedGil Gil;
 	PyObject* PVal = nullptr;
 	if(GetMutable() != nullptr)
 	{
-		PyObject* PyFile = *GetMutable();
-		if(PyFile != nullptr)
+		if(PyObject* PyFile = *GetMutable(); PyFile != nullptr)
 		{
 			PyObject* PFunc = PyObject_GetAttrString(PyFile, FnName.c_str());
 			if(PFunc != nullptr && PyCallable_Check(PFunc))
@@ -42,7 +41,7 @@ bool CharacterControlScript::WatchedPythonScript::UpdateInternal()
 		return false;
 	}
 
-	ScopedGil Gil;
+	const ScopedGil Gil;
 
 	// Import by file name from the script's own folder, wherever that is
 	const std::filesystem::path& Path = GetPath();
@@ -56,8 +55,7 @@ bool CharacterControlScript::WatchedPythonScript::UpdateInternal()
 	}
 
 	// WatchedFile hands us a fresh, empty slot on every reload, so the module always has to be stored again
-	PyObject* PyFile = PyImport_GetModule(PName);
-	if(PyFile == nullptr)
+	if(PyObject* PyFile = PyImport_GetModule(PName); PyFile == nullptr)
 	{
 		*GetMutable() = PyImport_Import(PName);
 	} else
@@ -84,11 +82,10 @@ void CharacterControlScript::WatchedPythonScript::DisposeInternal()
 		return;
 	}
 
-	ScopedGil Gil;
+	const ScopedGil Gil;
 	if(GetMutable() != nullptr)
 	{
-		PyObject* PyFile = *GetMutable();
-		if(PyFile != nullptr)
+		if(PyObject* PyFile = *GetMutable(); PyFile != nullptr)
 		{
 			Py_DECREF(PyFile);
 		}

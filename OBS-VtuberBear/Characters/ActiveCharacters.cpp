@@ -10,7 +10,7 @@ std::optional<std::filesystem::path> CharacterControlOBS::GetGlobalSettingsPath(
 	{
 		std::array<char, MAX_PATH> DocumentsFolder = {};
 
-		if(HRESULT Result = SHGetFolderPathA(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, DocumentsFolder.data()); SUCCEEDED(Result))
+		if(const HRESULT Result = SHGetFolderPathA(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, DocumentsFolder.data()); SUCCEEDED(Result))
 		{
 			return std::make_optional(std::filesystem::path(DocumentsFolder.data()) / "OBSCharacterSettings");
 		}
@@ -34,14 +34,14 @@ void CharacterControlOBS::ActiveCharacters::MakeActiveCharacter(const std::strin
 {
 	// Built before the lock; if the name is taken the new one is dropped on the way out, after the lock is gone
 	auto NewCharacterPtr = std::make_shared<Character>(std::move(NewCharacter));
-	std::scoped_lock Lock(CharactersMutex);
+	const std::scoped_lock Lock(CharactersMutex);
 	Characters.emplace(Name, std::move(NewCharacterPtr));
 }
 
 std::shared_ptr<CharacterControlOBS::Character> CharacterControlOBS::ActiveCharacters::RemoveActiveCharacter(const std::string& Name)
 {
-	std::scoped_lock Lock(CharactersMutex);
-	auto FoundIt = Characters.find(Name);
+	const std::scoped_lock Lock(CharactersMutex);
+	const auto FoundIt = Characters.find(Name);
 
 	if(FoundIt == Characters.end())
 	{
@@ -55,10 +55,9 @@ std::shared_ptr<CharacterControlOBS::Character> CharacterControlOBS::ActiveChara
 
 std::shared_ptr<CharacterControlOBS::Character> CharacterControlOBS::ActiveCharacters::GetActiveCharacter(const std::string& Name)
 {
-	std::scoped_lock Lock(CharactersMutex);
-	auto FoundIt = Characters.find(Name);
+	const std::scoped_lock Lock(CharactersMutex);
 
-	if(FoundIt != Characters.end())
+	if(const auto FoundIt = Characters.find(Name); FoundIt != Characters.end())
 	{
 		return FoundIt->second;
 	}

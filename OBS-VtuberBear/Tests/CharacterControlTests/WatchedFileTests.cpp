@@ -1,10 +1,10 @@
 // WatchedFile reloads a file when it changes on disk, but looks at the disk at most every 10 seconds. That interval is fixed,
 // so the tests that need a reload wait it out; they are in WatchedFileSlow and can be left out with
 // --gtest_filter=-WatchedFileSlow.*
-#include <gtest/gtest.h>
 #include <chrono>
 #include <thread>
 #include <CharacterControlCore/WatchedFile.h>
+#include <gtest/gtest.h>
 #include "TestSupport.h"
 
 using namespace CharacterControlTests;
@@ -17,7 +17,7 @@ struct Payload
 };
 
 // Loads the file's text, and keeps count of what WatchedFile asked of it
-class TextFile : public CharacterControlCore::WatchedFile<Payload>
+class TextFile final : public CharacterControlCore::WatchedFile<Payload>
 {
 public:
 	using WatchedFile::WatchedFile;
@@ -29,7 +29,7 @@ public:
 	std::vector<std::string> Disposed;
 
 protected:
-	virtual bool UpdateInternal() override
+	bool UpdateInternal() override
 	{
 		++Loads;
 		if(FailLoads)
@@ -41,7 +41,7 @@ protected:
 		return true;
 	}
 
-	virtual void DisposeInternal() override
+	void DisposeInternal() override
 	{
 		if(GetMutable() != nullptr)
 		{
@@ -59,7 +59,7 @@ protected:
 // File times only move forward when a test says so, so a rewrite right after a write can't land on the same timestamp
 void Touch(const std::filesystem::path& Path)
 {
-	std::filesystem::last_write_time(Path, std::filesystem::last_write_time(Path) + 2s);
+	last_write_time(Path, last_write_time(Path) + 2s);
 }
 
 // Longer than WatchedFile's 10 second interval
@@ -72,7 +72,7 @@ void WaitOutInterval()
 TEST_F(WatchedFileTest, GetPath_ReturnsTheWatchedPath)
 {
 	const auto Path = Dir.File("Rig.json");
-	TextFile File(Path);
+	const TextFile File(Path);
 
 	EXPECT_EQ(File.GetPath(), Path);
 }
@@ -81,7 +81,7 @@ TEST_F(WatchedFileTest, NothingIsLoadedBeforeTheFirstUpdate)
 {
 	const auto Path = Dir.File("Rig.json");
 	WriteText(Path, "one");
-	TextFile File(Path);
+	const TextFile File(Path);
 
 	EXPECT_EQ(File.Get(), nullptr);
 	EXPECT_EQ(File.Loads, 0);
@@ -149,7 +149,7 @@ TEST_F(WatchedFileTest, MoveConstruct_TakesTheLoadedFileAndPath)
 	File.Update();
 	const Payload* Loaded = File.Get();
 
-	TextFile Moved(std::move(File));
+	const TextFile Moved(std::move(File));
 
 	EXPECT_EQ(Moved.GetPath(), Path);
 	EXPECT_EQ(Moved.Get(), Loaded);
@@ -159,7 +159,7 @@ TEST_F(WatchedFileTest, MoveConstruct_TakesTheLoadedFileAndPath)
 
 TEST(WatchedFileSlow, AfterTheInterval_ReloadsAChangedFileAndLeavesAnUnchangedOneAlone)
 {
-	TempDir Dir;
+	const TempDir Dir;
 	const auto ChangedPath = Dir.File("Changed.json");
 	const auto UnchangedPath = Dir.File("Unchanged.json");
 	WriteText(ChangedPath, "old");
@@ -188,7 +188,7 @@ TEST(WatchedFileSlow, AfterTheInterval_ReloadsAChangedFileAndLeavesAnUnchangedOn
 
 TEST(WatchedFileSlow, AfterTheInterval_AFailedReloadDropsTheOldFile)
 {
-	TempDir Dir;
+	const TempDir Dir;
 	const auto Path = Dir.File("Rig.json");
 	WriteText(Path, "old");
 	TextFile File(Path);

@@ -113,11 +113,13 @@
         </ClCompile>
     </ItemDefinitionGroup>
     <ItemGroup>
+        <ClInclude Include="Characters\CharacterSourceInfos.h" />
         <ClInclude Include="PCH.h"/>
         <ClInclude Include="plugin-macros.h"/>
         <ClInclude Include="Characters\ActiveCharacters.h"/>
         <ClInclude Include="Characters\Attribute.h"/>
         <ClInclude Include="Characters\Character.h"/>
+        <ClInclude Include="Characters\CharacterSourceInfos.h"/>
         <ClInclude Include="Characters\CharacterSource.h"/>
         <ClInclude Include="Discord\DiscordComponent.h"/>
         <ClInclude Include="Discord\DiscordDock.h"/>

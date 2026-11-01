@@ -7,6 +7,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
+
 #include <delayimp.h>
 
 using namespace CharacterControlScript;
@@ -17,7 +18,7 @@ namespace
 // python3.dll, which every Python provides but only next to its own python3<minor>.dll, and which exports the same names.
 HMODULE BoundModule = nullptr;
 
-FARPROC WINAPI DelayLoadHook(const unsigned Notification, const PDelayLoadInfo Info)
+FARPROC WINAPI DelayLoadHook(const unsigned Notification, DelayLoadInfo* const Info)
 {
 	if(Notification == dliNotePreLoadLibrary && BoundModule != nullptr && _stricmp(Info->szDll, "python3.dll") == 0)
 	{
@@ -66,9 +67,8 @@ std::filesystem::path SearchOnPath(const std::wstring& Name)
 	}
 
 	// SearchPath also looks in the current directory; don't load a DLL just because OBS was started from next to one
-	std::error_code Error;
 	std::filesystem::path Found(Buffer.data());
-	if(equivalent(Found.parent_path(), std::filesystem::current_path(Error), Error))
+	if(std::error_code Error; equivalent(Found.parent_path(), std::filesystem::current_path(Error), Error))
 	{
 		Found.clear();
 	}
@@ -95,15 +95,15 @@ std::vector<std::wstring> SubKeys(const HKEY Key)
 
 std::wstring ReadInstallPath(const HKEY Tag)
 {
-	constexpr DWORD FLAGS = RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ;
+	constexpr DWORD Flags = RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ;
 	DWORD Size = 0;
-	if(RegGetValueW(Tag, L"InstallPath", nullptr, FLAGS, nullptr, nullptr, &Size) != ERROR_SUCCESS || Size < sizeof(wchar_t))
+	if(RegGetValueW(Tag, L"InstallPath", nullptr, Flags, nullptr, nullptr, &Size) != ERROR_SUCCESS || Size < sizeof(wchar_t))
 	{
 		return {};
 	}
 
 	std::wstring Value(Size / sizeof(wchar_t), L'\0');
-	if(RegGetValueW(Tag, L"InstallPath", nullptr, FLAGS, nullptr, Value.data(), &Size) != ERROR_SUCCESS)
+	if(RegGetValueW(Tag, L"InstallPath", nullptr, Flags, nullptr, Value.data(), &Size) != ERROR_SUCCESS)
 	{
 		Value.clear();
 	} else
@@ -229,7 +229,7 @@ std::vector<Candidate> FindCandidates(const std::vector<std::filesystem::path>& 
 			Found.push_back(std::move(Item));
 		}
 
-		if(std::filesystem::path OnPath = SearchOnPath(Name); !OnPath.empty())
+		if(const std::filesystem::path OnPath = SearchOnPath(Name); !OnPath.empty())
 		{
 			Candidate Item;
 			Item.Rank = 2;

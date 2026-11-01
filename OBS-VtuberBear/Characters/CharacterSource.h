@@ -5,8 +5,8 @@
 #include <mutex>
 #include <obs-module.h>
 #include "Characters/ActiveCharacters.h"
-#include "Render/Coord.h"
 #include "Discord/DiscordComponent.h"
+#include "Render/Coord.h"
 
 namespace CharacterControlOBS
 {
@@ -44,7 +44,7 @@ template<typename Source>
 class CharacterSource
 {
 public:
-	static obs_source_info MakeInfo(const char* Id)
+	static obs_source_info MakeInfo(const char* Id) noexcept
 	{
 		return {
 			.id = Id,
@@ -79,9 +79,9 @@ private:
 	static void SetupCharacter(Source& SourceData)
 	{
 		// The images take a while to load, so work on a copy of the settings instead of holding the lock
-		Source Settings = [&SourceData]() -> Source
+		Source Settings = [&SourceData]() ->Source
 		{
-			std::scoped_lock Lock(SourceData.SettingsMutex);
+			const std::scoped_lock Lock(SourceData.SettingsMutex);
 			return SourceData;
 		}();
 
@@ -99,7 +99,7 @@ private:
 			const CharacterControlRender::Coord NewSize = ActiveCharacter->GetImageRoot().GetMaxResolution();
 			bool Renamed;
 			{
-				std::scoped_lock Lock(SourceData.SettingsMutex);
+				const std::scoped_lock Lock(SourceData.SettingsMutex);
 				SourceData.Size = NewSize;
 				Renamed = SourceData.Name != Settings.Name;
 			}
@@ -125,11 +125,11 @@ private:
 			return nullptr;
 		}
 
-		auto* Data = new Source();
+		auto Data = std::make_unique<Source>();
 		LoadSettings(*Data, Settings);
 		Data->Active = obs_source_active(OBSSource);
 
-		return Data;
+		return Data.release();
 	}
 
 	static void Destroy(void* Data)
@@ -139,9 +139,8 @@ private:
 			return;
 		}
 
-		auto* SourceData = static_cast<Source*>(Data);
+		const std::unique_ptr<Source> SourceData(static_cast<Source*>(Data));
 		ActiveCharacters::Get().RemoveActiveCharacter(SourceData->Name);
-		delete SourceData;
 	}
 
 	static uint32_t GetWidth(void* Data)
@@ -152,7 +151,7 @@ private:
 		}
 
 		const auto* SourceData = static_cast<const Source*>(Data);
-		std::scoped_lock Lock(SourceData->SettingsMutex);
+		const std::scoped_lock Lock(SourceData->SettingsMutex);
 		return static_cast<uint32_t>(SourceData->Size.X);
 	}
 
@@ -164,7 +163,7 @@ private:
 		}
 
 		const auto* SourceData = static_cast<const Source*>(Data);
-		std::scoped_lock Lock(SourceData->SettingsMutex);
+		const std::scoped_lock Lock(SourceData->SettingsMutex);
 		return static_cast<uint32_t>(SourceData->Size.Y);
 	}
 
@@ -200,7 +199,7 @@ private:
 		auto* SourceData = static_cast<Source*>(Data);
 		Str OldName;
 		{
-			std::scoped_lock Lock(SourceData->SettingsMutex);
+			const std::scoped_lock Lock(SourceData->SettingsMutex);
 			OldName = SourceData->Name;
 			LoadSettings(*SourceData, Settings);
 		}
@@ -221,7 +220,7 @@ private:
 		auto* SourceData = static_cast<Source*>(Data);
 		std::shared_ptr<Character> Removed;
 		{
-			std::scoped_lock Lock(SourceData->SettingsMutex);
+			const std::scoped_lock Lock(SourceData->SettingsMutex);
 			Removed = ActiveCharacters::Get().RemoveActiveCharacter(SourceData->Name);
 		}
 
@@ -244,7 +243,7 @@ private:
 		std::shared_ptr<Character> Removed;
 		std::shared_ptr<Character> ActiveCharacter;
 		{
-			std::scoped_lock Lock(SourceData->SettingsMutex);
+			const std::scoped_lock Lock(SourceData->SettingsMutex);
 			if(!SourceData->IsLive())
 			{
 				Removed = ActiveCharacters::Get().RemoveActiveCharacter(SourceData->Name);
@@ -300,7 +299,7 @@ private:
 		const auto* SourceData = static_cast<const Source*>(Data);
 		std::shared_ptr<Character> ActiveCharacter;
 		{
-			std::scoped_lock Lock(SourceData->SettingsMutex);
+			const std::scoped_lock Lock(SourceData->SettingsMutex);
 			if(!SourceData->Active)
 			{
 				return;

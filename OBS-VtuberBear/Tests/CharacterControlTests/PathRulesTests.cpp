@@ -1,8 +1,8 @@
 // The rule that keeps every path written in a shared file, such as a character's, inside that file's folder
-#include <gtest/gtest.h>
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <gtest/gtest.h>
 #include "PCH.h"
 #include "CharacterRig/PathRules.h"
 
@@ -10,20 +10,24 @@ using namespace CharacterControlOBS;
 
 namespace
 {
-const FilePath FOLDER = FilePath(L"C:\\Characters\\123456789012345678");
+const FilePath& CharacterFolder()
+{
+	static const FilePath FOLDER(L"C:\\Characters\\123456789012345678");
+	return FOLDER;
+}
 }
 
 TEST(ResolveInsideFolder, KeepsPathsInsideTheFolder)
 {
-	EXPECT_EQ(ResolveInsideFolder(FOLDER, "control.py"), FOLDER / "control.py");
-	EXPECT_EQ(ResolveInsideFolder(FOLDER, "styles/default.json"), FOLDER / "styles" / "default.json");
-	EXPECT_EQ(ResolveInsideFolder(FOLDER, "styles\\default.json"), FOLDER / "styles" / "default.json");
+	EXPECT_EQ(ResolveInsideFolder(CharacterFolder(), "control.py"), CharacterFolder() / "control.py");
+	EXPECT_EQ(ResolveInsideFolder(CharacterFolder(), "styles/default.json"), CharacterFolder() / "styles" / "default.json");
+	EXPECT_EQ(ResolveInsideFolder(CharacterFolder(), "styles\\default.json"), CharacterFolder() / "styles" / "default.json");
 }
 
 TEST(ResolveInsideFolder, TidiesPathsThatStayInside)
 {
-	EXPECT_EQ(ResolveInsideFolder(FOLDER, "./control.py"), FOLDER / "control.py");
-	EXPECT_EQ(ResolveInsideFolder(FOLDER, "styles/../control.py"), FOLDER / "control.py");
+	EXPECT_EQ(ResolveInsideFolder(CharacterFolder(), "./control.py"), CharacterFolder() / "control.py");
+	EXPECT_EQ(ResolveInsideFolder(CharacterFolder(), "styles/../control.py"), CharacterFolder() / "control.py");
 }
 
 TEST(ResolveInsideFolder, RefusesPathsThatLeaveTheFolder)
@@ -48,7 +52,7 @@ TEST(ResolveInsideFolder, RefusesPathsThatLeaveTheFolder)
 	for(const Str& Path : Paths)
 	{
 		SCOPED_TRACE(Path);
-		EXPECT_EQ(ResolveInsideFolder(FOLDER, Path), std::nullopt);
+		EXPECT_EQ(ResolveInsideFolder(CharacterFolder(), Path), std::nullopt);
 	}
 }
 
@@ -57,7 +61,7 @@ TEST(ResolveInsideFolder, ReadsUtf8)
 {
 	// A u-umlaut followed by ".psd": in UTF-8 bytes as JSON has it, and as the wide character Windows uses
 	const Str Utf8 = Str{static_cast<char>(0xC3), static_cast<char>(0xBC)} + ".psd";
-	const std::wstring Wide = std::wstring(1, static_cast<wchar_t>(0xFC)) + L".psd";
+	const std::wstring Wide = std::wstring(1, 0xFC) + L".psd";
 
-	EXPECT_EQ(ResolveInsideFolder(FOLDER, Utf8), FOLDER / Wide);
+	EXPECT_EQ(ResolveInsideFolder(CharacterFolder(), Utf8), CharacterFolder() / Wide);
 }

@@ -1,5 +1,6 @@
 #include "PCH.h"
 #include "Characters/CharacterSource.h"
+#include "Characters/CharacterSourceInfos.h"
 
 using namespace CharacterControlOBS;
 using namespace CharacterControlRender;

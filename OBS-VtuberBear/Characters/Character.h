@@ -1,9 +1,8 @@
 #pragma once
-#include <obs-module.h>
 #include "Characters/Attribute.h"
+#include "Python/WatchedPythonScript.h"
 #include "Render/ImageLayer.h"
 #include "Render/WatchedImage.h"
-#include "Python/WatchedPythonScript.h"
 
 namespace CharacterControlOBS
 {
@@ -11,6 +10,11 @@ using AttributeMap = std::unordered_map<std::string, std::unique_ptr<Attribute<i
 class Component
 {
 public:
+	Component() = default;
+	Component(const Component&) = delete;
+	Component(Component&&) = delete;
+	Component& operator=(const Component&) = delete;
+	Component& operator=(Component&&) = delete;
 	virtual ~Component() = default;
 	virtual void DeclareAttributes(AttributeMap& Map) = 0;
 	virtual void UpdateAttributes(const AttributeMap& Map) = 0;
@@ -31,7 +35,7 @@ public:
 
 	[[nodiscard]] const Attribute<int>* GetIntAttribute(StrIdRef AttrName) const;
 
-	void Render(gs_effect_t* Effect) const;
+	void Render(const gs_effect_t* Effect) const;
 
 	CharacterControlRender::ImageLayer& GetImageRoot();
 

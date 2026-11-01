@@ -1,8 +1,8 @@
 #include "PCH.h"
 #include "Characters/Character.h"
 #include "Python/PythonInterface.h"
-#include "Render/WatchedImage.h"
 #include "Python/WatchedPythonScript.h"
+#include "Render/WatchedImage.h"
 
 using namespace CharacterControlOBS;
 
@@ -23,7 +23,7 @@ void Character::SetupImageControlScript(const std::filesystem::path& Filename)
 
 void Character::UpdateAttributes() const
 {
-	for(auto& ComponentPtr : Components)
+	for(const auto& ComponentPtr : Components)
 	{
 		ComponentPtr->UpdateAttributes(IntAttributes);
 	}
@@ -33,7 +33,7 @@ void Character::UpdateRenderState()
 {
 	if(ImageControlScript && CharacterControlScript::PythonInterface::TryGet() != nullptr)
 	{
-		CharacterControlScript::ScopedGil Gil;
+		const CharacterControlScript::ScopedGil Gil;
 		ImageControlScript->Update();
 
 		PyObject* PArgs = PyTuple_New(1);
@@ -69,7 +69,7 @@ const Attribute<int>* Character::GetIntAttribute(StrIdRef AttrName) const
 	return nullptr;
 }
 
-void Character::Render(gs_effect_t* Effect) const
+void Character::Render(const gs_effect_t* Effect) const
 {
 	ImageRoot.Render(Effect);
 }

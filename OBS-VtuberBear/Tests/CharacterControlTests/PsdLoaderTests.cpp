@@ -1,10 +1,10 @@
 // The PSD loader in WatchedImage.cpp, run through WatchedFileImageLibrary like the plugin does. Each test builds a PSD with
 // PsdBuilder.h, loads it, and looks at the layers that came out: their names, positions and pixels. The pixels are RGBA with
 // the alpha already multiplied in, which is what ObsStubs.h keeps instead of handing them to the GPU.
-#include <gtest/gtest.h>
 #include <algorithm>
 #include <array>
 #include <memory>
+#include <gtest/gtest.h>
 #include "ObsStubs.h"
 #include "PCH.h"
 #include "PsdBuilder.h"
@@ -27,7 +27,7 @@ protected:
 		ObsStubs::Reset();
 	}
 
-	std::unique_ptr<WatchedFileImageLibrary> LoadBytes(const std::vector<uint8_t>& Bytes, const std::string& FileName = "Avatar.psd") const
+	[[nodiscard]] std::unique_ptr<WatchedFileImageLibrary> LoadBytes(const std::vector<uint8_t>& Bytes, const std::string& FileName = "Avatar.psd") const
 	{
 		const auto Path = Dir.File(FileName);
 		WriteBytes(Path, Bytes);
@@ -35,7 +35,7 @@ protected:
 		return std::make_unique<WatchedFileImageLibrary>(Path);
 	}
 
-	std::unique_ptr<WatchedFileImageLibrary> Load(const Psd::Document& Document) const
+	[[nodiscard]] std::unique_ptr<WatchedFileImageLibrary> Load(const Psd::Document& Document) const
 	{
 		return LoadBytes(Psd::Build(Document));
 	}
@@ -415,6 +415,8 @@ TEST_P(PsdCompressionTest, DecodesTheSamePixels)
 	}
 }
 
+namespace
+{
 const char* CompressionName(const testing::TestParamInfo<Psd::Compression>& Info)
 {
 	switch(Info.param)
@@ -428,6 +430,7 @@ const char* CompressionName(const testing::TestParamInfo<Psd::Compression>& Info
 		default :
 			return "ZipPrediction";
 	}
+}
 }
 
 INSTANTIATE_TEST_SUITE_P(Codecs, PsdCompressionTest, testing::Values(Psd::Raw, Psd::Rle, Psd::Zip, Psd::ZipPrediction), CompressionName);
@@ -786,7 +789,7 @@ TEST_F(PsdLoaderTest, SdkUnicodeNameLongerThanItsBlock_IsRefused)
 	std::vector<uint8_t> Bytes = Psd::Build(Document);
 
 	const std::string Key = "luni";
-	const auto Block = std::search(Bytes.begin(), Bytes.end(), Key.begin(), Key.end());
+	const auto Block = std::ranges::search(Bytes, Key).begin();
 	ASSERT_NE(Block, Bytes.end());
 	// The count follows the key and the block's length
 	const std::array<uint8_t, 4> HugeCount = {0xFF, 0x00, 0x00, 0x03};

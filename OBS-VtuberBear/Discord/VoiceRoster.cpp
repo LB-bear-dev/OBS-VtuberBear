@@ -30,12 +30,15 @@ DiscordBear::SpeakingEvents VoiceRoster::MakeEvents()
 		{
 			SetStatus(NewStatus);
 		},
+		.ServersListed = {},
+		.VoiceChannelsListed = {},
+		.ChannelWatched = {},
 	};
 }
 
 std::optional<bool> VoiceRoster::GetSpeaking(const DiscordBear::UserId& Id) const
 {
-	std::scoped_lock Lock(Mutex);
+	const std::scoped_lock Lock(Mutex);
 
 	if(const auto Found = Members.find(Id); Found != Members.end())
 	{
@@ -47,7 +50,7 @@ std::optional<bool> VoiceRoster::GetSpeaking(const DiscordBear::UserId& Id) cons
 
 SpeakingStatus VoiceRoster::GetStatus() const
 {
-	std::scoped_lock Lock(Mutex);
+	const std::scoped_lock Lock(Mutex);
 	return Status;
 }
 
@@ -55,7 +58,7 @@ std::vector<VoiceRoster::MemberState> VoiceRoster::GetMembers() const
 {
 	std::vector<MemberState> Result;
 	{
-		std::scoped_lock Lock(Mutex);
+		const std::scoped_lock Lock(Mutex);
 		Result.reserve(Members.size());
 
 		for(const auto& Member : Members | std::views::values)
@@ -75,10 +78,10 @@ std::vector<VoiceRoster::MemberState> VoiceRoster::GetMembers() const
 
 void VoiceRoster::Reset(std::vector<DiscordBear::VoiceMember>&& NewMembers)
 {
-	std::scoped_lock Lock(Mutex);
+	const std::scoped_lock Lock(Mutex);
 	Members.clear();
 
-	for(DiscordBear::VoiceMember& Member : NewMembers)
+	for(DiscordBear::VoiceMember& Member : std::move(NewMembers))
 	{
 		DiscordBear::UserId Id = Member.User;
 		Members.insert_or_assign(std::move(Id), MemberState{.Member = std::move(Member)});
@@ -88,19 +91,19 @@ void VoiceRoster::Reset(std::vector<DiscordBear::VoiceMember>&& NewMembers)
 void VoiceRoster::Update(DiscordBear::VoiceMember&& Member)
 {
 	DiscordBear::UserId Id = Member.User;
-	std::scoped_lock Lock(Mutex);
+	const std::scoped_lock Lock(Mutex);
 	Members[std::move(Id)].Member = std::move(Member);
 }
 
 void VoiceRoster::Remove(const DiscordBear::UserId& Id)
 {
-	std::scoped_lock Lock(Mutex);
+	const std::scoped_lock Lock(Mutex);
 	Members.erase(Id);
 }
 
 void VoiceRoster::SetSpeaking(const DiscordBear::UserId& Id, const bool Speaking)
 {
-	std::scoped_lock Lock(Mutex);
+	const std::scoped_lock Lock(Mutex);
 
 	if(const auto Found = Members.find(Id); Found != Members.end())
 	{
@@ -110,7 +113,7 @@ void VoiceRoster::SetSpeaking(const DiscordBear::UserId& Id, const bool Speaking
 
 void VoiceRoster::SetStatus(const SpeakingStatus NewStatus)
 {
-	std::scoped_lock Lock(Mutex);
+	const std::scoped_lock Lock(Mutex);
 	Status = NewStatus;
 
 	if(NewStatus != SpeakingStatus::Connected)

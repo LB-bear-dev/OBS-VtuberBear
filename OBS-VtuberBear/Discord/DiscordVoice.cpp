@@ -88,14 +88,10 @@ DiscordVoice::Settings LoadSettings(FilePathRef File)
 }
 }
 
-std::mutex DiscordVoice::SingletonMutex;
-std::unique_ptr<DiscordVoice> DiscordVoice::Singleton = nullptr;
-bool DiscordVoice::ShutDown = false;
-
 DiscordVoice* DiscordVoice::Get()
 {
 	// The source callbacks run on OBS's graphics thread and the dock on its UI thread, so either can get here first
-	std::scoped_lock Lock(SingletonMutex);
+	const std::scoped_lock Lock(SingletonMutex);
 
 	if(Singleton == nullptr && !ShutDown)
 	{
@@ -109,56 +105,13 @@ void DiscordVoice::Shutdown()
 {
 	std::unique_ptr<DiscordVoice> Stopping;
 	{
-		std::scoped_lock Lock(SingletonMutex);
+		const std::scoped_lock Lock(SingletonMutex);
 		ShutDown = true;
 		Stopping = std::move(Singleton);
 	}
 
 	// Stopped with the lock released, so nothing waiting on Get holds up the source's thread
 	Stopping.reset();
-}
-
-DiscordVoice::DiscordVoice() : SettingsFile(ConfigPath("StreamKit.json"))
-{
-	DiscordBear::SetLogFn([](LogSeverity Severity, const char* Msg)
-	{
-		blog(ObsLogLevel(Severity), "%s", Msg);
-	});
-
-	CurrentSettings = LoadSettings(SettingsFile);
-	CurrentSettings.FollowUser = CurrentSettings.FollowUser && CAN_FOLLOW_USER;
-
-	DiscordBear::SpeakingEvents Events = Roster.MakeEvents();
-	Events.ServersListed = [this](std::vector<DiscordBear::NamedId>&& NewServers)
-	{
-		std::scoped_lock Lock(Mutex);
-		Servers = std::move(NewServers);
-		++ListsVersion;
-	};
-	Events.VoiceChannelsListed = [this](const DiscordBear::GuildId& Guild, std::vector<DiscordBear::NamedId>&& Channels)
-	{
-		std::scoped_lock Lock(Mutex);
-		VoiceChannels.insert_or_assign(Guild, std::move(Channels));
-		++ListsVersion;
-	};
-	Events.ChannelWatched = [this](const DiscordBear::WatchedChannel& NewWatched)
-	{
-		std::scoped_lock Lock(Mutex);
-		Watched = NewWatched;
-	};
-
-	// Discord only lets the application's testers use RPC (DiscordBear::MakeRpcSpeakingSource) until it is approved,
-	// so everyone goes through StreamKit for now.
-	Source = DiscordBear::MakeStreamKitSpeakingSource({
-		.UserDataFolder = ConfigPath("WebView2"),
-		.Guild = CurrentSettings.Guild,
-		.Channel = CurrentSettings.Channel,
-		.FollowUser = CurrentSettings.FollowUser,
-	});
-
-	// Start now, a character is only set up once its user shows up in the call, and nothing finds out who is in the
-	// call until the source is running, so this can't wait for a character's DiscordComponent.
-	Source->Start(std::move(Events));
 }
 
 DiscordVoice::~DiscordVoice()
@@ -184,25 +137,25 @@ std::vector<VoiceRoster::MemberState> DiscordVoice::GetMembers() const
 
 DiscordBear::WatchedChannel DiscordVoice::GetWatched() const
 {
-	std::scoped_lock Lock(Mutex);
+	const std::scoped_lock Lock(Mutex);
 	return Watched;
 }
 
 DiscordVoice::Settings DiscordVoice::GetSettings() const
 {
-	std::scoped_lock Lock(Mutex);
+	const std::scoped_lock Lock(Mutex);
 	return CurrentSettings;
 }
 
 std::vector<DiscordBear::NamedId> DiscordVoice::GetServers() const
 {
-	std::scoped_lock Lock(Mutex);
+	const std::scoped_lock Lock(Mutex);
 	return Servers;
 }
 
 std::optional<std::vector<DiscordBear::NamedId>> DiscordVoice::GetVoiceChannels(const DiscordBear::GuildId& Guild) const
 {
-	std::scoped_lock Lock(Mutex);
+	const std::scoped_lock Lock(Mutex);
 
 	if(const auto Found = VoiceChannels.find(Guild); Found != VoiceChannels.end())
 	{
@@ -214,7 +167,7 @@ std::optional<std::vector<DiscordBear::NamedId>> DiscordVoice::GetVoiceChannels(
 
 uint64_t DiscordVoice::GetListsVersion() const
 {
-	std::scoped_lock Lock(Mutex);
+	const std::scoped_lock Lock(Mutex);
 	return ListsVersion;
 }
 
@@ -230,13 +183,16 @@ void DiscordVoice::RequestVoiceChannels(const DiscordBear::GuildId& Guild) const
 
 void DiscordVoice::SetFollowUser(const bool Follow)
 {
-	if(Follow && !CAN_FOLLOW_USER)
+	if constexpr(!CAN_FOLLOW_USER)
 	{
-		return;
+		if(Follow)
+		{
+			return;
+		}
 	}
 
 	{
-		std::scoped_lock Lock(Mutex);
+		const std::scoped_lock Lock(Mutex);
 
 		if(CurrentSettings.FollowUser == Follow)
 		{
@@ -254,7 +210,7 @@ void DiscordVoice::SetFollowUser(const bool Follow)
 void DiscordVoice::WatchChannel(const DiscordBear::GuildId& Guild, const DiscordBear::ChannelId& Channel)
 {
 	{
-		std::scoped_lock Lock(Mutex);
+		const std::scoped_lock Lock(Mutex);
 		CurrentSettings.Guild = Guild;
 		CurrentSettings.Channel = Channel;
 		Save();
@@ -268,10 +224,53 @@ void DiscordVoice::ShowSetup() const
 	Source->ShowSetup();
 }
 
+DiscordVoice::DiscordVoice() : SettingsFile(ConfigPath("StreamKit.json"))
+{
+	DiscordBear::SetLogFn([](const LogSeverity Severity, const char* Msg)
+	{
+		blog(ObsLogLevel(Severity), "%s", Msg);
+	});
+
+	CurrentSettings = LoadSettings(SettingsFile);
+	CurrentSettings.FollowUser = CurrentSettings.FollowUser && CAN_FOLLOW_USER;
+
+	DiscordBear::SpeakingEvents Events = Roster.MakeEvents();
+	Events.ServersListed = [this](std::vector<DiscordBear::NamedId>&& NewServers)
+	{
+		const std::scoped_lock Lock(Mutex);
+		Servers = std::move(NewServers);
+		++ListsVersion;
+	};
+	Events.VoiceChannelsListed = [this](const DiscordBear::GuildId& Guild, std::vector<DiscordBear::NamedId>&& Channels)
+	{
+		const std::scoped_lock Lock(Mutex);
+		VoiceChannels.insert_or_assign(Guild, std::move(Channels));
+		++ListsVersion;
+	};
+	Events.ChannelWatched = [this](const DiscordBear::WatchedChannel& NewWatched)
+	{
+		const std::scoped_lock Lock(Mutex);
+		Watched = NewWatched;
+	};
+
+	// Discord only lets the application's testers use RPC (DiscordBear::MakeRpcSpeakingSource) until it is approved,
+	// so everyone goes through StreamKit for now.
+	Source = DiscordBear::MakeStreamKitSpeakingSource({
+		.UserDataFolder = ConfigPath("WebView2"),
+		.Guild = CurrentSettings.Guild,
+		.Channel = CurrentSettings.Channel,
+		.FollowUser = CurrentSettings.FollowUser,
+	});
+
+	// Start now, a character is only set up once its user shows up in the call, and nothing finds out who is in the
+	// call until the source is running, so this can't wait for a character's DiscordComponent.
+	Source->Start(std::move(Events));
+}
+
 void DiscordVoice::Save() const
 {
 	std::error_code Error;
-	std::filesystem::create_directories(SettingsFile.parent_path(), Error);
+	create_directories(SettingsFile.parent_path(), Error);
 	std::ofstream Stream(SettingsFile, std::ios::trunc);
 	Stream << nlohmann::json{{"Guild", CurrentSettings.Guild}, {"Channel", CurrentSettings.Channel}, {"FollowUser", CurrentSettings.FollowUser}}.dump(1, '\t');
 
@@ -280,3 +279,7 @@ void DiscordVoice::Save() const
 		ERROR_("%s: could not save the Discord voice settings.", LogPath(SettingsFile).c_str());
 	}
 }
+
+std::mutex DiscordVoice::SingletonMutex;
+std::unique_ptr<DiscordVoice> DiscordVoice::Singleton = nullptr;
+bool DiscordVoice::ShutDown = false;

@@ -13,24 +13,29 @@
 
 namespace CharacterControlScript
 {
-class WatchedPythonScript : public CharacterControlCore::WatchedFile<PyObject*>
+class WatchedPythonScript final : public CharacterControlCore::WatchedFile<PyObject*>
 {
 public:
-	WatchedPythonScript(const std::filesystem::path& Filename) : WatchedFile(Filename)
+	explicit WatchedPythonScript(const std::filesystem::path& Filename) : WatchedFile(Filename)
 	{
 		Update();
 	}
 
 	// WatchedFile's destructor can't reach our DisposeInternal override, so release the module here.
-	virtual ~WatchedPythonScript() override
+	~WatchedPythonScript() override
 	{
-		DisposeInternal();
+		WatchedPythonScript::DisposeInternal();
 	}
+
+	WatchedPythonScript(const WatchedPythonScript&) = delete;
+	WatchedPythonScript(WatchedPythonScript&&) = delete;
+	WatchedPythonScript& operator=(const WatchedPythonScript&) = delete;
+	WatchedPythonScript& operator=(WatchedPythonScript&&) = delete;
 
 	PyObject* Call(const std::string& FnName, PyObject* Args) const;
 
-private:
-	virtual bool UpdateInternal() override;
-	virtual void DisposeInternal() override;
+protected:
+	bool UpdateInternal() override;
+	void DisposeInternal() override;
 };
 }

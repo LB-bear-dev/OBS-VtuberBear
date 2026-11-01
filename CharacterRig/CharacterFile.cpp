@@ -33,7 +33,7 @@ std::optional<FilePath> ReadPathField(const nlohmann::json& Json, const char* Fi
 		return std::nullopt;
 	}
 
-	const Str& Written = Found->get_ref<const Str&>();
+	const auto& Written = Found->get_ref<const Str&>();
 	std::optional<FilePath> Resolved = CharacterControlOBS::ResolveInsideFolder(Folder, Written);
 	if(!Resolved)
 	{
@@ -106,6 +106,6 @@ std::optional<CharacterControlOBS::CharacterFile> CharacterControlOBS::LoadChara
 		return std::nullopt;
 	}
 
-	const Str Text{std::istreambuf_iterator<char>(File), std::istreambuf_iterator<char>()};
+	const Str Text{std::istreambuf_iterator(File), std::istreambuf_iterator<char>()};
 	return ParseCharacterFile(Text, Folder);
 }

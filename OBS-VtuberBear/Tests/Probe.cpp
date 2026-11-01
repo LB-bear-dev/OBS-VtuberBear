@@ -48,7 +48,9 @@ public:
 	}
 
 	EmptyRegistry(const EmptyRegistry&) = delete;
+	EmptyRegistry(EmptyRegistry&&) = delete;
 	EmptyRegistry& operator=(const EmptyRegistry&) = delete;
+	EmptyRegistry& operator=(EmptyRegistry&&) = delete;
 
 private:
 	std::wstring Name;
@@ -59,8 +61,7 @@ private:
 void StartInterpreter(const PythonBinding& Binding)
 {
 	static std::wstring Home;
-	auto* SetPythonHome = reinterpret_cast<void(__cdecl*)(const wchar_t*)>(FindPythonExport(Binding, "Py_SetPythonHome"));
-	if(SetPythonHome != nullptr && !Binding.Home.empty())
+	if(auto* SetPythonHome = reinterpret_cast<void(__cdecl*)(const wchar_t*)>(FindPythonExport(Binding, "Py_SetPythonHome")); SetPythonHome != nullptr && !Binding.Home.empty())
 	{
 		Home = Binding.Home.wstring();
 		SetPythonHome(Home.c_str());
@@ -69,23 +70,10 @@ void StartInterpreter(const PythonBinding& Binding)
 }
 }
 
-int PythonLocatorTests::InstalledMinor(const std::filesystem::path& Folder)
-{
-	for(int Minor = MAX_PYTHON_MINOR; Minor >= MIN_PYTHON_MINOR; --Minor)
-	{
-		std::error_code Error;
-		if(std::filesystem::exists(Folder / (L"python3" + std::to_wstring(Minor) + L".dll"), Error))
-		{
-			return Minor;
-		}
-	}
-	return -1;
-}
-
 int PythonLocatorTests::RunProbe(const std::vector<std::wstring>& Args)
 {
 	// A crash must not take the lines before it along
-	setvbuf(stdout, nullptr, _IONBF, 0);
+	static_cast<void>(setvbuf(stdout, nullptr, _IONBF, 0));
 
 	std::unique_ptr<EmptyRegistry> Registry;
 	std::vector<std::filesystem::path> Preferred;
@@ -129,4 +117,16 @@ int PythonLocatorTests::RunProbe(const std::vector<std::wstring>& Args)
 	}
 	printf("PYTHON OK\n");
 	return 0;
+}
+
+int PythonLocatorTests::InstalledMinor(const std::filesystem::path& Folder)
+{
+	for(int Minor = MAX_PYTHON_MINOR; Minor >= MIN_PYTHON_MINOR; --Minor)
+	{
+		if(std::error_code Error; exists(Folder / (L"python3" + std::to_wstring(Minor) + L".dll"), Error))
+		{
+			return Minor;
+		}
+	}
+	return -1;
 }

@@ -72,6 +72,9 @@
     <ClInclude Include="Characters\Character.h">
       <Filter>Characters</Filter>
     </ClInclude>
+    <ClInclude Include="Characters\CharacterSourceInfos.h">
+      <Filter>Characters</Filter>
+    </ClInclude>
     <ClInclude Include="Characters\CharacterSource.h">
       <Filter>Characters</Filter>
     </ClInclude>

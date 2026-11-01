@@ -1,5 +1,3 @@
-# clang-tidy checks, shared by Rider (Settings | Languages & Frameworks | C++ | Clang-Tidy picks this up),
-# Visual Studio, and the MSBuild /p:StaticAnalysis=true build (see Directory.Build.props).
 Checks: >
   -*,
   bugprone-*,
@@ -52,8 +50,8 @@ Checks: >
   readability-simplify-boolean-expr,
   readability-use-std-min-max
 
-# Only report on our own headers, not OBS/Qt/Python/nlohmann/gtest.
-HeaderFilterRegex: '.*[\\/](OBS-VtuberBear|CharacterControlCore|DiscordBear|TestCore)[\\/].*'
+HeaderFilterRegex: '.*[\\/](OBS-VtuberBear|CharacterRig|CharacterControlCore|DiscordBear|TestCore)[\\/].*'
+ExcludeHeaderFilterRegex: '.*[\\/](deps|packages|ThirdParty)[\\/].*'
 
 WarningsAsErrors: ''
 FormatStyle: none

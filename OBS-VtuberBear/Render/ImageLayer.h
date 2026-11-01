@@ -1,5 +1,4 @@
 #pragma once
-#include <map>
 #include "Render/Coord.h"
 #include "Render/WatchedImage.h"
 
@@ -23,7 +22,7 @@ public:
 	void Activate();
 	void Deactivate();
 
-	void Render(gs_effect_t* Effect) const;
+	void Render(const gs_effect_t* Effect) const;
 
 	ImageLayer* GetLayerByName(StrIdRef Name);
 

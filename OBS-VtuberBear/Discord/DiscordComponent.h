@@ -8,8 +8,8 @@ class DiscordComponent final : public Component
 public:
 	explicit DiscordComponent(std::string Id) : Id(std::move(Id)) {}
 
-	virtual void DeclareAttributes(AttributeMap& Map) override;
-	virtual void UpdateAttributes(const AttributeMap& Map) override;
+	void DeclareAttributes(AttributeMap& Map) override;
+	void UpdateAttributes(const AttributeMap& Map) override;
 
 private:
 	std::string Id;

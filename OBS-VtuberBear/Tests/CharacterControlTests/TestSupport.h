@@ -33,17 +33,19 @@ public:
 	{
 		static int Counter = 0;
 		Root = std::filesystem::temp_directory_path() / ("CharacterControlTests-" + std::to_string(_getpid()) + "-" + std::to_string(Counter++));
-		std::filesystem::create_directories(Root);
+		create_directories(Root);
 	}
 
 	~TempDir()
 	{
 		std::error_code Ignored;
-		std::filesystem::remove_all(Root, Ignored);
+		remove_all(Root, Ignored);
 	}
 
 	TempDir(const TempDir&) = delete;
+	TempDir(TempDir&&) = delete;
 	TempDir& operator=(const TempDir&) = delete;
+	TempDir& operator=(TempDir&&) = delete;
 
 	[[nodiscard]] std::filesystem::path File(const std::string& Name) const
 	{
@@ -62,7 +64,7 @@ class QuietStdout
 public:
 	QuietStdout()
 	{
-		fflush(stdout);
+		static_cast<void>(fflush(stdout));
 		const int Real = _dup(_fileno(stdout));
 		int Null = -1;
 		bool Redirected = false;
@@ -84,7 +86,9 @@ public:
 	}
 
 	QuietStdout(const QuietStdout&) = delete;
+	QuietStdout(QuietStdout&&) = delete;
 	QuietStdout& operator=(const QuietStdout&) = delete;
+	QuietStdout& operator=(QuietStdout&&) = delete;
 
 	~QuietStdout()
 	{
@@ -100,7 +104,7 @@ public:
 		}
 
 		// Whatever is still buffered is the noise, so it goes before stdout is pointed back
-		fflush(stdout);
+		static_cast<void>(fflush(stdout));
 		_dup2(Real, _fileno(stdout));
 		_close(Real);
 	}
@@ -124,6 +128,6 @@ inline void WriteText(const std::filesystem::path& Path, const std::string& Text
 inline std::string ReadText(const std::filesystem::path& Path)
 {
 	std::ifstream In(Path, std::ios::binary);
-	return {std::istreambuf_iterator<char>(In), std::istreambuf_iterator<char>()};
+	return {std::istreambuf_iterator(In), std::istreambuf_iterator<char>()};
 }
 }

@@ -3,8 +3,9 @@
 
 #include <array>
 #include <memory>
-#include <optional>
 #include <obs-module.h>
+#include <optional>
+#include <ranges>
 
 #include "CharacterControlCore/Messaging.h"
 #ifndef NOMINMAX
@@ -38,7 +39,7 @@ namespace
 // psd_sdk sizes its buffers with 32-bit width*height math, these should be the limits based on those constraints.
 constexpr unsigned int MAX_PSD_SIDE = 16384;
 constexpr int64_t MAX_LAYER_PIXELS = 256ll * 1024 * 1024;
-static_assert(MAX_LAYER_PIXELS < 1ll << 32, "psd_sdk multiplies width and height in 32 bits");
+static_assert(static_cast<uint64_t>(MAX_LAYER_PIXELS) < uint64_t{1} << 32u, "psd_sdk multiplies width and height in 32 bits");
 
 // The most output a decoder can produce per input byte
 constexpr uint64_t MAX_DECODE_RATIO = 1032;
@@ -84,9 +85,8 @@ std::string GetLayerName(const psd::Layer& Layer)
 	std::string LayerName;
 	if(Layer.utf16Name)
 	{
-		const auto WideName = reinterpret_cast<const wchar_t*>(Layer.utf16Name);
-		const int Size = WideCharToMultiByte(CP_UTF8, 0, WideName, -1, nullptr, 0, nullptr, nullptr);
-		if(Size > 1)
+		const auto* const WideName = reinterpret_cast<const wchar_t*>(Layer.utf16Name);
+		if(const int Size = WideCharToMultiByte(CP_UTF8, 0, WideName, -1, nullptr, 0, nullptr, nullptr); Size > 1)
 		{
 			LayerName.resize(Size - 1);
 			WideCharToMultiByte(CP_UTF8, 0, WideName, -1, LayerName.data(), Size, nullptr, nullptr);
@@ -137,7 +137,7 @@ unsigned int SampleMask(const Mask* MaskData, int X, int Y)
 		return MaskData->defaultColor;
 	}
 
-	auto Data = static_cast<const uint8_t*>(MaskData->data);
+	const auto* Data = static_cast<const uint8_t*>(MaskData->data);
 	return Data[(Y - MaskData->top) * (MaskData->right - MaskData->left) + (X - MaskData->left)];
 }
 
@@ -212,8 +212,7 @@ bool HasUndecodedChannel(const psd::Layer& Layer)
 {
 	for(unsigned int ChannelIndex = 0; ChannelIndex < Layer.channelCount; ++ChannelIndex)
 	{
-		const psd::Channel& Channel = Layer.channels[ChannelIndex];
-		if(IsImageChannel(Channel) && Channel.data == nullptr)
+		if(const psd::Channel& Channel = Layer.channels[ChannelIndex]; IsImageChannel(Channel) && Channel.data == nullptr)
 		{
 			return true;
 		}
@@ -311,7 +310,7 @@ DocumentPtr ParseSupportedDocument(const char* FileName, psd::NativeFile& File, 
 // its pixels (bmalloc) but has no texture yet.
 std::unique_ptr<gs_image_file_ex> MakeLayerImage(const psd::Layer& Layer, psd::Allocator& Allocator, const int Left, const int Top, const int Right, const int Bottom)
 {
-	constexpr int ALPHA_PLANE = 3;
+	constexpr int AlphaPlane = 3;
 	const unsigned int Width = Right - Left;
 	const unsigned int Height = Bottom - Top;
 	const size_t PlaneSize = sizeof(uint8_t) * Width * Height;
@@ -327,20 +326,11 @@ std::unique_ptr<gs_image_file_ex> MakeLayerImage(const psd::Layer& Layer, psd::A
 	std::array<PlanePtr, 4> Planes;
 	for(unsigned int ChannelIndex = 0; ChannelIndex < Layer.channelCount; ++ChannelIndex)
 	{
-		const psd::Channel& Channel = Layer.channels[ChannelIndex];
-
-		if(IsImageChannel(Channel))
+		if(const psd::Channel& Channel = Layer.channels[ChannelIndex]; IsImageChannel(Channel))
 		{
-			PlanePtr& Plane = Planes[Channel.type == psd::channelType::TRANSPARENCY_MASK ? ALPHA_PLANE : Channel.type];
+			PlanePtr& Plane = Planes[Channel.type == psd::channelType::TRANSPARENCY_MASK ? AlphaPlane : Channel.type];
 			Plane = NewPlane(0);
-			psd::imageUtil::CopyLayerData(static_cast<const uint8_t*>(Channel.data),
-				Plane.get(),
-				Layer.left - Left,
-				Layer.top - Top,
-				Layer.right - Left,
-				Layer.bottom - Top,
-				Width,
-				Height);
+			psd::imageUtil::CopyLayerData(static_cast<const uint8_t*>(Channel.data), Plane.get(), Layer.left - Left, Layer.top - Top, Layer.right - Left, Layer.bottom - Top, Width, Height);
 		}
 	}
 
@@ -349,7 +339,7 @@ std::unique_ptr<gs_image_file_ex> MakeLayerImage(const psd::Layer& Layer, psd::A
 	{
 		if(!Planes[PlaneIndex])
 		{
-			Planes[PlaneIndex] = NewPlane(PlaneIndex == ALPHA_PLANE ? 255u : 0u);
+			Planes[PlaneIndex] = NewPlane(PlaneIndex == AlphaPlane ? 255u : 0u);
 		}
 	}
 
@@ -419,15 +409,12 @@ std::optional<CharacterControlRender::Coord> TrimTransparentBorders(gs_image_fil
 	}
 
 	const unsigned int TrimmedWidth = MaxX - MinX + 1;
-	const unsigned int TrimmedHeight = MaxY - MinY + 1;
-	if(TrimmedWidth != Width || TrimmedHeight != Height)
+	if(const unsigned int TrimmedHeight = MaxY - MinY + 1; TrimmedWidth != Width || TrimmedHeight != Height)
 	{
 		// Pack the kept rows at the start of the buffer; each row moves to an earlier or equal address
 		for(unsigned int Row = 0; Row < TrimmedHeight; ++Row)
 		{
-			memmove(Image.texture_data + static_cast<size_t>(Row) * TrimmedWidth * 4,
-				Image.texture_data + (static_cast<size_t>(MinY + Row) * Width + MinX) * 4,
-				static_cast<size_t>(TrimmedWidth) * 4);
+			memmove(Image.texture_data + static_cast<size_t>(Row) * TrimmedWidth * 4, Image.texture_data + (static_cast<size_t>(MinY + Row) * Width + MinX) * 4, static_cast<size_t>(TrimmedWidth) * 4);
 		}
 
 		Image.cx = TrimmedWidth;
@@ -435,7 +422,7 @@ std::optional<CharacterControlRender::Coord> TrimTransparentBorders(gs_image_fil
 		Image.mem_usage = static_cast<size_t>(TrimmedWidth) * TrimmedHeight * 4 * sizeof(uint8_t);
 	}
 
-	return CharacterControlRender::Coord{static_cast<float>(MinX), static_cast<float>(MinY)};
+	return CharacterControlRender::Coord{.X = static_cast<float>(MinX), .Y = static_cast<float>(MinY)};
 }
 
 bool LoadPsd(const char* FileName, CharacterControlRender::FileImageLibrary& ImageLibrary, CharacterControlRender::Coord& CanvasSize)
@@ -459,14 +446,21 @@ bool LoadPsd(const char* FileName, CharacterControlRender::FileImageLibrary& Ima
 	}
 
 	// psd::File doesn't close itself. Declared before the document and its layers, so it closes after they are gone.
-	struct FileCloser
+	const struct FileCloser
 	{
-		psd::File& File;
+		explicit FileCloser(psd::File& ToClose) : File(ToClose) {}
+
+		FileCloser(const FileCloser&) = delete;
+		FileCloser(FileCloser&&) = delete;
+		FileCloser& operator=(const FileCloser&) = delete;
+		FileCloser& operator=(FileCloser&&) = delete;
 
 		~FileCloser()
 		{
 			File.Close();
 		}
+
+		psd::File& File;
 	} CloseFile{File};
 
 	const DocumentPtr Document = ParseSupportedDocument(FileName, File, Allocator);
@@ -475,15 +469,14 @@ bool LoadPsd(const char* FileName, CharacterControlRender::FileImageLibrary& Ima
 		return false;
 	}
 
-	const std::unique_ptr<psd::LayerMaskSection, LayerMaskSectionDeleter> LayerMaskSection(psd::ParseLayerMaskSection(Document.get(), &File, &Allocator),
-		LayerMaskSectionDeleter{&Allocator});
+	const std::unique_ptr<psd::LayerMaskSection, LayerMaskSectionDeleter> LayerMaskSection(ParseLayerMaskSection(Document.get(), &File, &Allocator), LayerMaskSectionDeleter{&Allocator});
 	if(!LayerMaskSection)
 	{
 		ERROR_("Cannot read the layers of %s.", FileName);
 		return false;
 	}
 
-	CanvasSize = {static_cast<float>(Document->width), static_cast<float>(Document->height)};
+	CanvasSize = {.X = static_cast<float>(Document->width), .Y = static_cast<float>(Document->height)};
 	const uint64_t FileSize = File.GetSize();
 
 	for(unsigned int LayerIndex = 0; LayerIndex < LayerMaskSection->layerCount; ++LayerIndex)
@@ -512,7 +505,7 @@ bool LoadPsd(const char* FileName, CharacterControlRender::FileImageLibrary& Ima
 			continue;
 		}
 
-		psd::ExtractLayer(Document.get(), &File, &Allocator, &Layer);
+		ExtractLayer(Document.get(), &File, &Allocator, &Layer);
 
 		if(HasUndecodedChannel(Layer))
 		{
@@ -532,14 +525,14 @@ bool LoadPsd(const char* FileName, CharacterControlRender::FileImageLibrary& Ima
 			continue;
 		}
 
-		const CharacterControlRender::Coord Offset{static_cast<float>(Left) + Kept->X, static_cast<float>(Top) + Kept->Y};
+		const CharacterControlRender::Coord Offset{.X = static_cast<float>(Left) + Kept->X, .Y = static_cast<float>(Top) + Kept->Y};
 
 		Image->loaded = true;
 		obs_enter_graphics();
 		gs_image_file_ex_init_texture(Image.get());
 		obs_leave_graphics();
 
-		std::string LayerPath = GetLayerPath(Layer);
+		const std::string LayerPath = GetLayerPath(Layer);
 
 		// only add new layers. try_emplace leaves Image alone when the name is taken.
 		if(!ImageLibrary.try_emplace(LayerPath, std::move(Image), static_cast<int>(LayerIndex), Offset).second)
@@ -572,7 +565,7 @@ bool CharacterControlRender::WatchedFileImageLibrary::UpdateInternal()
 	} else
 	{
 		const std::string& Name = !OverrideName.empty() ? OverrideName : GetPath().stem().string();
-		FileLayer& AddedLayer = GetMutable()->emplace(Name, FileLayer{std::make_unique<gs_image_file_ex>(), 0, {0, 0}}).first->second;
+		const FileLayer& AddedLayer = GetMutable()->emplace(Name, FileLayer{.Image = std::make_unique<gs_image_file_ex>(), .ZOrder = 0, .Offset = {.X = 0, .Y = 0}}).first->second;
 		Success = LoadImage(this->GetPath().string().c_str(), AddedLayer.Image.get());
 	}
 
@@ -580,7 +573,7 @@ bool CharacterControlRender::WatchedFileImageLibrary::UpdateInternal()
 	ImageNames.clear();
 	if(const FileImageLibrary* Library = GetMutable())
 	{
-		for(auto& [name, fileLayer] : *Library)
+		for(const auto& [name, fileLayer] : *Library)
 		{
 			if(fileLayer.Image != nullptr)
 			{
@@ -598,9 +591,9 @@ void CharacterControlRender::WatchedFileImageLibrary::DisposeInternal()
 {
 	if(GetMutable() != nullptr && !GetMutable()->empty())
 	{
-		for(auto& [name, fileLayer] : *GetMutable())
+		for(const FileLayer& Layer : *GetMutable() | std::views::values)
 		{
-			UnloadImage(fileLayer.Image.get());
+			UnloadImage(Layer.Image.get());
 		}
 	}
 }
@@ -623,17 +616,16 @@ void CharacterControlRender::CharacterImageLibrary::AddImageLibrary(FilePathRef 
 	}
 
 	// If this already exists in the global library, don't load it again
-	auto Library = LoadedImageLibraries.find(Path);
-	if(Library != LoadedImageLibraries.end() && !Library->second.expired())
+	if(const auto Library = LoadedImageLibraries.find(Path); Library != LoadedImageLibraries.end() && !Library->second.expired())
 	{
-		if(auto Ptr = Library->second.lock())
+		if(const auto Ptr = Library->second.lock())
 		{
 			ImageLibraries.push_back(Ptr);
 		}
 	} else
 	{
 		// Load, put in this image and put in global library
-		auto Ptr = std::make_shared<WatchedFileImageLibrary>(Path, OverrideName);
+		const auto Ptr = std::make_shared<WatchedFileImageLibrary>(Path, OverrideName);
 		ImageLibraries.push_back(Ptr);
 		LoadedImageLibraries[Path] = Ptr;
 	}
@@ -643,7 +635,7 @@ std::vector<std::string> CharacterControlRender::CharacterImageLibrary::GetValid
 {
 	std::vector<std::string> List;
 
-	for(auto& ImageLibrary : ImageLibraries)
+	for(const auto& ImageLibrary : ImageLibraries)
 	{
 		List.insert(List.end(), ImageLibrary->GetImageNames().begin(), ImageLibrary->GetImageNames().end());
 	}
@@ -653,12 +645,11 @@ std::vector<std::string> CharacterControlRender::CharacterImageLibrary::GetValid
 
 gs_image_file_ex* CharacterControlRender::CharacterImageLibrary::GetImageFromName(StrIdRef Name) const
 {
-	for(auto& ImageLibrary : ImageLibraries)
+	for(const auto& ImageLibrary : ImageLibraries)
 	{
 		if(const FileImageLibrary* ImageFile = ImageLibrary->Get())
 		{
-			auto FoundIt = ImageFile->find(Name);
-			if(FoundIt != ImageFile->end())
+			if(const auto FoundIt = ImageFile->find(Name); FoundIt != ImageFile->end())
 			{
 				return FoundIt->second.Image.get();
 			}
@@ -670,7 +661,7 @@ gs_image_file_ex* CharacterControlRender::CharacterImageLibrary::GetImageFromNam
 
 const CharacterControlRender::FileImageLibrary* CharacterControlRender::CharacterImageLibrary::GetLayers(FilePathRef Path) const
 {
-	for(auto& ImageLibrary : ImageLibraries)
+	for(const auto& ImageLibrary : ImageLibraries)
 	{
 		if(ImageLibrary != nullptr && ImageLibrary->GetPath() == Path)
 		{
@@ -683,8 +674,8 @@ const CharacterControlRender::FileImageLibrary* CharacterControlRender::Characte
 
 CharacterControlRender::Coord CharacterControlRender::CharacterImageLibrary::GetMaxResolution() const
 {
-	Coord Size{0, 0};
-	for(auto& LibraryPtr : ImageLibraries)
+	Coord Size{.X = 0, .Y = 0};
+	for(const auto& LibraryPtr : ImageLibraries)
 	{
 		if(const WatchedFileImageLibrary* Library = LibraryPtr.get())
 		{

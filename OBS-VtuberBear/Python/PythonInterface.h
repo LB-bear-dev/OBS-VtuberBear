@@ -16,7 +16,9 @@ public:
 	}
 
 	ScopedGil(const ScopedGil&) = delete;
+	ScopedGil(ScopedGil&&) = delete;
 	ScopedGil& operator=(const ScopedGil&) = delete;
+	ScopedGil& operator=(ScopedGil&&) = delete;
 
 private:
 	PyGILState_STATE State;
@@ -28,6 +30,11 @@ private:
 class PythonInterface final
 {
 public:
+	PythonInterface(const PythonInterface&) = delete;
+	PythonInterface(PythonInterface&&) = delete;
+	PythonInterface& operator=(const PythonInterface&) = delete;
+	PythonInterface& operator=(PythonInterface&&) = delete;
+
 	~PythonInterface()
 	{
 		// Only shut down an interpreter we started

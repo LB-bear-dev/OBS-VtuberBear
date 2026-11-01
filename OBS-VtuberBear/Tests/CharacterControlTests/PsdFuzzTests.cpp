@@ -15,7 +15,6 @@
 // unnoticed (see Directory.Build.props for how to make one), and it needs Release, because psd_sdk's asserts end the process
 // on corrupt input in Debug. It relies on ThirdParty\patches\psd_sdk.patch, which scripts\setup-deps.ps1 applies: upstream
 // psd_sdk crashes or hangs on files like these within the first few hundred.
-#include <gtest/gtest.h>
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -27,6 +26,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <gtest/gtest.h>
 #include "ObsStubs.h"
 #include "PCH.h"
 #include "PsdBuilder.h"
@@ -48,9 +48,8 @@ uint64_t EnvNumber(const char* Name, const uint64_t Default)
 		return Default;
 	}
 
-	const uint64_t Value = std::strtoull(Text, nullptr, 0);
-	free(Text);
-	return Value;
+	const std::unique_ptr<char, decltype(&free)> Owned(Text, &free);
+	return std::strtoull(Text, nullptr, 0);
 }
 
 std::string EnvText(const char* Name)
@@ -61,9 +60,8 @@ std::string EnvText(const char* Name)
 		return {};
 	}
 
-	std::string Value = Text;
-	free(Text);
-	return Value;
+	const std::unique_ptr<char, decltype(&free)> Owned(Text, &free);
+	return Text;
 }
 
 WatchedFileImageLibrary LoadQuietly(const std::filesystem::path& Path)
@@ -86,7 +84,9 @@ public:
 		}) {}
 
 	Watchdog(const Watchdog&) = delete;
+	Watchdog(Watchdog&&) = delete;
 	Watchdog& operator=(const Watchdog&) = delete;
+	Watchdog& operator=(Watchdog&&) = delete;
 
 	~Watchdog()
 	{
@@ -113,23 +113,23 @@ private:
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-			const int64_t Began = Since;
-			if(Began == 0 || std::chrono::steady_clock::now().time_since_epoch() - std::chrono::steady_clock::duration(Began) < Limit)
+			if(const int64_t Began = Since; Began == 0 || std::chrono::steady_clock::now().time_since_epoch() - std::chrono::steady_clock::duration(Began) < Limit)
 			{
 				continue;
 			}
 
-			const std::filesystem::path Kept = std::filesystem::temp_directory_path() / ("psd-fuzz-failure-" + std::to_string(Seed) + "-" + std::to_string(Iteration) + "-" + std::to_string(Start) + ".psd");
-				std::error_code Error;
-				copy_file(Current, Kept, std::filesystem::copy_options::overwrite_existing, Error);
-				QuietStdout::Restore();
-				printf("PSD fuzz: loading document %zu, file %llu, seed %llu took more than %lld seconds, kept as %s\n",
+			const std::filesystem::path Kept = std::filesystem::temp_directory_path() / ("psd-fuzz-failure-" + std::to_string(Seed) + "-" + std::to_string(Iteration) + "-" + std::to_string(Start) +
+				".psd");
+			std::error_code Error;
+			copy_file(Current, Kept, std::filesystem::copy_options::overwrite_existing, Error);
+			QuietStdout::Restore();
+			printf("PSD fuzz: loading document %zu, file %llu, seed %llu took more than %lld seconds, kept as %s\n",
 				Start.load(),
 				static_cast<unsigned long long>(Iteration.load()),
 				static_cast<unsigned long long>(Seed),
 				static_cast<long long>(Limit.count()),
 				Kept.string().c_str());
-			fflush(stdout);
+			static_cast<void>(fflush(stdout));
 			std::_Exit(3);
 		}
 	}
@@ -152,9 +152,9 @@ public:
 
 	uint64_t Next()
 	{
-		State ^= State << 13;
-		State ^= State >> 7;
-		State ^= State << 17;
+		State ^= State << 13u;
+		State ^= State >> 7u;
+		State ^= State << 17u;
 		return State;
 	}
 
@@ -175,7 +175,7 @@ struct StartingFile
 
 StartingFile Finish(const Psd::Document& Document)
 {
-	return {Build(Document), Build(Document).size() - (2 + static_cast<size_t>(Document.Width) * Document.Height * 3)};
+	return {.Bytes = Build(Document), .MutableEnd = Build(Document).size() - (2 + static_cast<size_t>(Document.Width) * Document.Height * 3)};
 }
 
 // Documents that between them use groups, masks, opacity, unicode names, every compression, and layers hanging off the canvas
@@ -338,14 +338,14 @@ TEST(PsdFuzz, MutatedFiles_LoadWithoutCrashing)
 	const std::vector<StartingFile> Starts = StartingFiles();
 
 	// The file being loaded is always the same one, so after a crash it is the file that did it
-	TempDir Dir;
+	const TempDir Dir;
 	const std::filesystem::path Path = Dir.File("Fuzz.psd");
 	printf("PSD fuzz: seed %llu, %llu files for each of %zu documents, the current one is %s\n",
 		static_cast<unsigned long long>(Seed),
 		static_cast<unsigned long long>(Iterations),
 		Starts.size(),
 		Path.string().c_str());
-	fflush(stdout);
+	static_cast<void>(fflush(stdout));
 
 	Watchdog Guard(Path, std::chrono::seconds(EnvNumber("PSD_FUZZ_TIMEOUT", 30)), Seed);
 	Random Rng(Seed);
@@ -374,7 +374,8 @@ TEST(PsdFuzz, MutatedFiles_LoadWithoutCrashing)
 			Guard.End();
 			if(!Found.empty())
 			{
-				const std::filesystem::path Kept = std::filesystem::temp_directory_path() / ("psd-fuzz-failure-" + std::to_string(Seed) + "-" + std::to_string(Iteration) + "-" + std::to_string(Start) + ".psd");
+				const std::filesystem::path Kept = std::filesystem::temp_directory_path() / ("psd-fuzz-failure-" + std::to_string(Seed) + "-" + std::to_string(Iteration) + "-" + std::to_string(Start)
+					+ ".psd");
 				WriteBytes(Kept, Bytes);
 				ADD_FAILURE() << Found << "; document " << Start << ", file " << Iteration << ", seed " << Seed << ", kept as " << Kept.string();
 			}

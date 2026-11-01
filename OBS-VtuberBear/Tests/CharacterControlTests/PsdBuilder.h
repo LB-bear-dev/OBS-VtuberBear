@@ -36,7 +36,7 @@ struct Rect
 
 inline Rect Box(const int32_t Left, const int32_t Top, const int32_t Width, const int32_t Height)
 {
-	return {Left, Top, Left + Width, Top + Height};
+	return {.Left = Left, .Top = Top, .Right = Left + Width, .Bottom = Top + Height};
 }
 
 using Rgba = std::array<uint8_t, 4>;
@@ -159,7 +159,7 @@ inline Channel MakeChannel(const int16_t Id, const std::vector<uint8_t>& Pixels,
 				}
 
 				const int Start = X;
-				while(X < Width && X - Start < 128 && !(X + 2 < Width && Row[X] == Row[X + 1] && Row[X] == Row[X + 2]))
+				while(X < Width && X - Start < 128 && (X + 2 >= Width || Row[X] != Row[X + 1] || Row[X] != Row[X + 2]))
 				{
 					++X;
 				}
@@ -171,7 +171,7 @@ inline Channel MakeChannel(const int16_t Id, const std::vector<uint8_t>& Pixels,
 
 		for(const std::vector<uint8_t>& Row : Rows)
 		{
-			Result.Data.push_back(static_cast<uint8_t>(Row.size() >> 8));
+			Result.Data.push_back(static_cast<uint8_t>(Row.size() >> 8u));
 			Result.Data.push_back(static_cast<uint8_t>(Row.size()));
 		}
 		for(const std::vector<uint8_t>& Row : Rows)
@@ -204,9 +204,9 @@ inline Channel MakeChannel(const int16_t Id, const std::vector<uint8_t>& Pixels,
 		const bool Final = Offset + Length == Plain.size();
 		Result.Data.push_back(Final ? 1 : 0);
 		Result.Data.push_back(static_cast<uint8_t>(Length));
-		Result.Data.push_back(static_cast<uint8_t>(Length >> 8));
+		Result.Data.push_back(static_cast<uint8_t>(Length >> 8u));
 		Result.Data.push_back(static_cast<uint8_t>(~Length));
-		Result.Data.push_back(static_cast<uint8_t>(~Length >> 8));
+		Result.Data.push_back(static_cast<uint8_t>(~Length >> 8u));
 		Result.Data.insert(Result.Data.end(), Plain.begin() + static_cast<std::ptrdiff_t>(Offset), Plain.begin() + static_cast<std::ptrdiff_t>(Offset + Length));
 		Offset += Length;
 	} while(Offset < Plain.size());
@@ -220,7 +220,7 @@ inline Channel MakeChannel(const int16_t Id, const std::vector<uint8_t>& Pixels,
 	}
 	for(const uint32_t Shift : {24u, 16u, 8u, 0u})
 	{
-		Result.Data.push_back(static_cast<uint8_t>(((B << 16 | A) >> Shift) & 0xFF));
+		Result.Data.push_back(static_cast<uint8_t>(((B << 16u | A) >> Shift) & 0xFFu));
 	}
 	return Result;
 }
@@ -271,7 +271,7 @@ inline Layers Group(std::string Name, const uint8_t Opacity, Layers Contents)
 		Result.Name = std::move(LayerName);
 		Result.Section = Section;
 		Result.Opacity = LayerOpacity;
-		Result.Channels = {Channel{Alpha}, Channel{Red}, Channel{Green}, Channel{Blue}};
+		Result.Channels = {Channel{.Id = Alpha}, Channel{.Id = Red}, Channel{.Id = Green}, Channel{.Id = Blue}};
 		return Result;
 	};
 
@@ -294,13 +294,13 @@ namespace Detail
 
 		void U16(const uint32_t Value)
 		{
-			U8(Value >> 8);
+			U8(Value >> 8u);
 			U8(Value);
 		}
 
 		void U32(const uint32_t Value)
 		{
-			U16(Value >> 16);
+			U16(Value >> 16u);
 			U16(Value);
 		}
 

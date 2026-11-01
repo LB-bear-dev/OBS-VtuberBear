@@ -2,9 +2,10 @@
 #include <fstream>
 #include <optional>
 #include <nlohmann/json.hpp>
-#include "Characters/CharacterSource.h"
 #include "CharacterControlCore/Messaging.h"
 #include "CharacterRig/PathRules.h"
+#include "Characters/CharacterSource.h"
+#include "Characters/CharacterSourceInfos.h"
 #include "Python/PythonInterface.h"
 
 using namespace CharacterControlOBS;
@@ -45,11 +46,10 @@ void LoadRigImages(FilePathRef RigPath, ImageLayer& Layer)
 			continue;
 		}
 
-		Coord Offset{0, 0};
-		auto OffsetJson = Image.find("offset");
-		if(OffsetJson != Image.end() && OffsetJson->is_array() && OffsetJson->size() == 2 && (*OffsetJson)[0].is_number() && (*OffsetJson)[1].is_number())
+		Coord Offset{.X = 0, .Y = 0};
+		if(const auto OffsetJson = Image.find("offset"); OffsetJson != Image.end() && OffsetJson->is_array() && OffsetJson->size() == 2 && (*OffsetJson)[0].is_number() && (*OffsetJson)[1].is_number())
 		{
-			Offset = {(*OffsetJson)[0].get<float>(), (*OffsetJson)[1].get<float>()};
+			Offset = {.X = (*OffsetJson)[0].get<float>(), .Y = (*OffsetJson)[1].get<float>()};
 		}
 
 		const auto& FileName = File->get_ref<const std::string&>();
@@ -101,7 +101,7 @@ struct ScriptedCharacterSource : CharacterSourceData
 		}
 	}
 
-	[[nodiscard]] bool IsLive() const
+	[[nodiscard]] static bool IsLive()
 	{
 		return true;
 	}

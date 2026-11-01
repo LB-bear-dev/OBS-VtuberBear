@@ -18,17 +18,15 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "PCH.h"
 #include <obs-module.h>
+#include "plugin-macros.h"
+#include "CharacterControlCore/Messaging.h"
+#include "Characters/CharacterSourceInfos.h"
 #include "Discord/DiscordComponent.h"
 #include "Discord/DiscordDock.h"
-#include "CharacterControlCore/Messaging.h"
-#include "plugin-macros.h"
 
 OBS_DECLARE_MODULE()
 
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
-
-extern obs_source_info SimpleDiscordCharacterSourceInfo;
-extern obs_source_info ScriptedDiscordCharacterSourceInfo;
 
 namespace
 {
@@ -57,7 +55,7 @@ void MoveConfigFromOldName()
 	const FilePath OldFolder = NewFolder.parent_path() / u8"CharacterControlOBS";
 	std::error_code Error;
 
-	if(!std::filesystem::is_directory(OldFolder, Error) || std::filesystem::exists(NewFolder, Error))
+	if(!is_directory(OldFolder, Error) || exists(NewFolder, Error))
 	{
 		return;
 	}
@@ -68,13 +66,14 @@ void MoveConfigFromOldName()
 
 	if(Error)
 	{
-		ERROR_("%s: could not move it to %s (%s), so the Discord Voice settings start over.", reinterpret_cast<const char*>(OldText.c_str()),
-			reinterpret_cast<const char*>(NewText.c_str()), Error.message().c_str());
+		ERROR_("%s: could not move it to %s (%s), so the Discord Voice settings start over.",
+			reinterpret_cast<const char*>(OldText.c_str()),
+			reinterpret_cast<const char*>(NewText.c_str()),
+			Error.message().c_str());
 		return;
 	}
 
-	INFO_("Moved the settings from %s to %s, the plugin's new name.", reinterpret_cast<const char*>(OldText.c_str()),
-		reinterpret_cast<const char*>(NewText.c_str()));
+	INFO_("Moved the settings from %s to %s, the plugin's new name.", reinterpret_cast<const char*>(OldText.c_str()), reinterpret_cast<const char*>(NewText.c_str()));
 }
 }
 
