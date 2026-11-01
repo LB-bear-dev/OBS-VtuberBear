@@ -10,16 +10,17 @@ using namespace CharacterControlOBS;
 
 namespace
 {
-constexpr std::array<const char*, 4> CONDITION_KEYS = {"all", "any", "not", "attr"};
-
 struct OperatorKey
 {
 	const char* Key;
 	Condition::Operator Op;
 };
 
-constexpr std::array<OperatorKey, 7> OPERATORS = {
+constexpr std::array<OperatorKey, 10> OPERATORS = {
 	{
+		{.Key = "all", .Op = Condition::Operator::All},
+		{.Key = "any", .Op = Condition::Operator::Any},
+		{.Key = "not", .Op = Condition::Operator::Not},
 		{.Key = "eq", .Op = Condition::Operator::Equal},
 		{.Key = "ne", .Op = Condition::Operator::NotEqual},
 		{.Key = "lt", .Op = Condition::Operator::Less},
@@ -41,6 +42,27 @@ const OperatorKey* GetOperatorFromName(const Str& Key)
 	return Found != OPERATORS.end() ? &*Found : nullptr;
 }
 
+bool IsComparison(const Condition::Operator Op)
+{
+	switch(Op)
+	{
+		case Condition::Operator::All :
+		case Condition::Operator::Any :
+		case Condition::Operator::Not :
+			return false;
+		case Condition::Operator::Equal :
+		case Condition::Operator::NotEqual :
+		case Condition::Operator::Less :
+		case Condition::Operator::Greater :
+		case Condition::Operator::LessEqual :
+		case Condition::Operator::GreaterEqual :
+		case Condition::Operator::Contains :
+			return true;
+	}
+
+	return false;
+}
+
 bool OperationIsAllowed(const Attribute::Value& Val, const Condition::Operator Op)
 {
 	const bool Equality = Op == Condition::Operator::Equal || Op == Condition::Operator::NotEqual;
@@ -58,7 +80,7 @@ bool OperationIsAllowed(const Attribute::Value& Val, const Condition::Operator O
 	// @formatter:on
 }
 
-std::optional<Condition> ParseGroup(Condition::Operator Op, const char* Key, const nlohmann::json& Json, int Depth);
+std::optional<Condition> ParseGroup(Condition::Operator Op, const char* Key, const nlohmann::json& List, int Depth);
 
 std::optional<Condition> ParseCompare(const nlohmann::json& Json);
 
@@ -76,53 +98,31 @@ std::optional<Condition> Parse(const nlohmann::json& Json, const int Depth)
 		return std::nullopt;
 	}
 
-	const char* Key = nullptr;
-	for(const char* Candidate : CONDITION_KEYS)
+	if(Json.contains("attr"))
 	{
-		if(Json.contains(Candidate))
-		{
-			if(Key != nullptr)
-			{
-				Key = nullptr;
-				break;
-			}
-
-			Key = Candidate;
-		}
+		return ParseCompare(Json);
 	}
 
-	if(Key == nullptr)
+	if(Json.size() != 1)
 	{
 		ERROR_("A condition needs exactly one of \"all\", \"any\", \"not\" or \"attr\".");
 		return std::nullopt;
 	}
 
-	const Str KeyName = Key;
-	if(KeyName == "attr")
+	const auto Entry = Json.begin();
+	const OperatorKey* Op = GetOperatorFromName(Entry.key());
+	if(Op == nullptr || IsComparison(Op->Op))
 	{
-		return ParseCompare(Json);
+		ERROR_("Unknown condition \"%s\": a condition needs exactly one of \"all\", \"any\", \"not\" or \"attr\".", Entry.key().c_str());
+		return std::nullopt;
 	}
 
-	for(const auto& Item : Json.items())
+	if(Op->Op != Condition::Operator::Not)
 	{
-		if(Item.key() != KeyName)
-		{
-			ERROR_("Unknown key \"%s\" in a \"%s\" condition.", Item.key().c_str(), Key);
-			return std::nullopt;
-		}
+		return ParseGroup(Op->Op, Op->Key, Entry.value(), Depth);
 	}
 
-	if(KeyName == "all")
-	{
-		return ParseGroup(Condition::Operator::All, Key, Json, Depth);
-	}
-
-	if(KeyName == "any")
-	{
-		return ParseGroup(Condition::Operator::Any, Key, Json, Depth);
-	}
-
-	std::optional<Condition> Child = Parse(Json.at(Key), Depth + 1);
+	std::optional<Condition> Child = Parse(Entry.value(), Depth + 1);
 	if(!Child)
 	{
 		return std::nullopt;
@@ -134,9 +134,8 @@ std::optional<Condition> Parse(const nlohmann::json& Json, const int Depth)
 	return Not;
 }
 
-std::optional<Condition> ParseGroup(const Condition::Operator Op, const char* Key, const nlohmann::json& Json, const int Depth)
+std::optional<Condition> ParseGroup(const Condition::Operator Op, const char* Key, const nlohmann::json& List, const int Depth)
 {
-	const nlohmann::json& List = Json.at(Key);
 	if(!List.is_array())
 	{
 		ERROR_("\"%s\" must be a list of conditions.", Key);
@@ -189,7 +188,7 @@ std::optional<Condition> ParseCompare(const nlohmann::json& Json)
 
 	const Str& OperatorName = Entry.key();
 	const OperatorKey* Op = GetOperatorFromName(OperatorName);
-	if(Op == nullptr)
+	if(Op == nullptr || !IsComparison(Op->Op))
 	{
 		ERROR_("Attribute \"%s\" uses unknown operator %s.", Name.c_str(), OperatorName.c_str());
 		return std::nullopt;

@@ -140,11 +140,13 @@ TEST_F(ConditionTest, RefusesWhatIsNotACondition)
 {
 	ExpectRefused(R"([{"attr": "Talking", "eq": true}])", "A condition must be a JSON object.");
 	ExpectRefused(R"({})", "A condition needs exactly one of \"all\", \"any\", \"not\" or \"attr\".");
-	ExpectRefused(R"({"all": [], "attr": "Talking", "eq": true})", "A condition needs exactly one of");
+	ExpectRefused(R"({"all": [], "attr": "Talking", "eq": true})", "The condition on \"Talking\" has more than one operator.");
 	ExpectRefused(R"({"all": {"attr": "Talking", "eq": true}})", "\"all\" must be a list of conditions.");
 	ExpectRefused(R"({"any": "Talking"})", "\"any\" must be a list of conditions.");
 	ExpectRefused(R"({"not": [{"attr": "Talking", "eq": true}]})", "A condition must be a JSON object.");
-	ExpectRefused(R"({"all": [], "when": true})", "Unknown key \"when\" in a \"all\" condition.");
+	ExpectRefused(R"({"all": [], "when": true})", "A condition needs exactly one of \"all\", \"any\", \"not\" or \"attr\".");
+	ExpectRefused(R"({"when": true})", "Unknown condition \"when\": a condition needs exactly one of");
+	ExpectRefused(R"({"eq": true})", "Unknown condition \"eq\": a condition needs exactly one of");
 }
 
 TEST_F(ConditionTest, RefusesABadComparison)
@@ -153,8 +155,9 @@ TEST_F(ConditionTest, RefusesABadComparison)
 	ExpectRefused(R"({"attr": "Talking"})", "The condition on \"Talking\" has no operator.");
 	ExpectRefused(R"({"attr": "Volume", "gt": 1, "lt": 5})", "The condition on \"Volume\" has more than one operator.");
 	ExpectRefused(R"({"attr": "Talking", "equals": true})", "Attribute \"Talking\" uses unknown operator equals.");
-	ExpectRefused(R"({"attr": "Talking", "eq": null})", "\"Talking\" must be compared with a bool, number or string, not null.");
-	ExpectRefused(R"({"attr": "mood", "eq": ["happy"]})", "\"mood\" must be compared with a bool, number or string, not [\"happy\"].");
+	ExpectRefused(R"({"attr": "Talking", "all": []})", "Attribute \"Talking\" uses unknown operator all.");
+	ExpectRefused(R"({"attr": "Talking", "eq": null})", "\"Talking\" uses invalid operator null.");
+	ExpectRefused(R"({"attr": "mood", "eq": ["happy"]})", "\"mood\" uses invalid operator [\"happy\"].");
 }
 
 TEST_F(ConditionTest, RefusesAnOperatorItsValueDoesNotSupport)
