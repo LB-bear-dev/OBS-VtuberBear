@@ -1,19 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
-    <!-- AddressSanitizer is opt-in as well. It builds a project and the libraries it uses with /fsanitize=address into
-         x64\<Configuration>-asan, so it never mixes with a normal build. Meant for the test exes, in Release (ASan does not work
-         with Debug's runtime checks):
-           msbuild OBS-VtuberBear\Tests\CharacterControlTests\CharacterControlTests.vcxproj /p:Configuration=Release /p:Platform=x64 /p:Sanitize=true
-         Needs the "C++ AddressSanitizer" component of Visual Studio. -->
     <PropertyGroup Condition="'$(Sanitize)'=='true'">
         <EnableASAN>true</EnableASAN>
         <OutDir>$(MSBuildThisFileDirectory)x64\$(Configuration)-asan\</OutDir>
         <IntDir>$(Platform)\$(Configuration)-asan\</IntDir>
     </PropertyGroup>
-    <!-- Static analysis is opt-in, so normal builds are unchanged:
-             msbuild OBS-VtuberBear.sln /p:Configuration=Debug /p:Platform=x64 /p:StaticAnalysis=true
-         Runs MSVC Code Analysis (rules in BearApps.ruleset) and clang-tidy (checks in .clang-tidy)
-         over our own projects. Anything under ThirdParty\ is left alone. -->
     <PropertyGroup>
         <_BearIsThirdParty>$(MSBuildProjectDirectory.Contains('ThirdParty'))</_BearIsThirdParty>
     </PropertyGroup>
@@ -22,11 +13,8 @@
         <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
         <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
         <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)BearApps.ruleset</CodeAnalysisRuleSet>
-        <!-- ClangTidyShims.h supplies MSVC intrinsics clang lacks. Only affects clang-tidy, not the MSVC compile. -->
         <ClangTidyAdditionalOptions>/FI"$(MSBuildThisFileDirectory)ClangTidyShims.h" $(ClangTidyAdditionalOptions)</ClangTidyAdditionalOptions>
     </PropertyGroup>
-    <!-- Treat <angle-bracket> includes (OBS, Qt, Python, nlohmann, the STL) as external
-         so their warnings and analysis results don't drown out ours. -->
     <ItemDefinitionGroup Condition="'$(StaticAnalysis)'=='true' and '$(_BearIsThirdParty)'!='True'">
         <ClCompile>
             <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>

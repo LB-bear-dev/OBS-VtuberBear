@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <!-- GoogleTest as a static library for TestCore. The sources are the ThirdParty\googletest submodule,
-         pinned to a release tag; after cloning, initialise it with git submodule update (init option). -->
     <ItemGroup Label="ProjectConfigurations">
         <ProjectConfiguration Include="Debug|x64">
             <Configuration>Debug</Configuration>
@@ -58,7 +56,6 @@
         <ClCompile Include="$(GoogleTestDir)src\gtest-all.cc"/>
     </ItemGroup>
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
-    <!-- shortcut: Rider's C++ MSBuild build invokes dependencies with /t:DiscordBearTests (project name as target); alias it to Build, same as DiscordBear.vcxproj. -->
     <Target Name="DiscordBearTests" DependsOnTargets="Build"/>
     <Target Name="CheckGoogleTestSubmodule" BeforeTargets="PrepareForBuild">
         <Error Condition="!Exists('$(GoogleTestDir)src\gtest-all.cc')" Text="GoogleTest sources are missing. Run: git submodule update --init"/>
