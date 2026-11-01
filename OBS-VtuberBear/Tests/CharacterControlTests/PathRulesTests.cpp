@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include "PCH.h"
-#include "PathRules.h"
+#include "CharacterRig/PathRules.h"
 
 using namespace CharacterControlOBS;
 

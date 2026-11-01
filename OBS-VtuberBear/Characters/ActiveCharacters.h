@@ -3,7 +3,7 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
-#include "Character.h"
+#include "Characters/Character.h"
 
 namespace CharacterControlOBS
 {

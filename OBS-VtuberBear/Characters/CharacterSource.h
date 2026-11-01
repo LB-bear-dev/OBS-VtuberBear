@@ -4,9 +4,9 @@
 #include <memory>
 #include <mutex>
 #include <obs-module.h>
-#include "ActiveCharacters.h"
-#include "Coord.h"
-#include "DiscordComponent.h"
+#include "Characters/ActiveCharacters.h"
+#include "Render/Coord.h"
+#include "Discord/DiscordComponent.h"
 
 namespace CharacterControlOBS
 {

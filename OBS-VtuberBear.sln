@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gtest", "ThirdParty\gtest\g
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "psd", "ThirdParty\psd\psd.vcxproj", "{B4D611BC-58F9-4352-B217-C8217ACBF057}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CharacterRig", "CharacterRig\CharacterRig.vcxproj", "{30EF6D50-0C38-4D53-B3F7-ADB6D97FD092}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -39,6 +41,10 @@ Global
 		{B4D611BC-58F9-4352-B217-C8217ACBF057}.Debug|x64.Build.0 = Debug|x64
 		{B4D611BC-58F9-4352-B217-C8217ACBF057}.Release|x64.ActiveCfg = Release|x64
 		{B4D611BC-58F9-4352-B217-C8217ACBF057}.Release|x64.Build.0 = Release|x64
+		{30EF6D50-0C38-4D53-B3F7-ADB6D97FD092}.Debug|x64.ActiveCfg = Debug|x64
+		{30EF6D50-0C38-4D53-B3F7-ADB6D97FD092}.Debug|x64.Build.0 = Debug|x64
+		{30EF6D50-0C38-4D53-B3F7-ADB6D97FD092}.Release|x64.ActiveCfg = Release|x64
+		{30EF6D50-0C38-4D53-B3F7-ADB6D97FD092}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

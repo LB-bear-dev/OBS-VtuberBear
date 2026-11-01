@@ -1,5 +1,5 @@
 #pragma once
-#include "ActiveCharacters.h"
+#include "Characters/ActiveCharacters.h"
 
 namespace CharacterControlScript
 {

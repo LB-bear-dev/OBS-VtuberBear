@@ -1,5 +1,5 @@
 #include "PCH.h"
-#include "DiscordDock.h"
+#include "Discord/DiscordDock.h"
 #include <QtCore/QTimer>
 #include <QtWidgets/QAbstractItemView>
 #include <QtWidgets/QCheckBox>
@@ -11,8 +11,8 @@
 #include <QtWidgets/QToolButton>
 #include <obs-module.h>
 #include <windows.h>
-#include "DiscordVoice.h"
-#include "Messaging.h"
+#include "Discord/DiscordVoice.h"
+#include "CharacterControlCore/Messaging.h"
 
 using namespace CharacterControlOBS;
 using DiscordBear::SpeakingStatus;

@@ -1,7 +1,7 @@
 #pragma once
 #include <map>
-#include "Coord.h"
-#include "WatchedImage.h"
+#include "Render/Coord.h"
+#include "Render/WatchedImage.h"
 
 namespace CharacterControlRender
 {

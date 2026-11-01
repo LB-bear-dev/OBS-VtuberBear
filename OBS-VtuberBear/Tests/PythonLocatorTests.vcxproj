@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <!-- Tests for PythonLocator.cpp, the code that lets OBS-VtuberBear run on whichever Python 3 is installed. It is
-         compiled straight into this exe, built the way the plugin is: Python's stable ABI, python3.dll delay-loaded. Binding a
-         Python can only happen once per process, so every scenario runs in a child process, with its
-         own PATH and registry view; see PythonLocatorTests.cpp. Needs PYTHONPATH (BearApps.user.props, written by
-         scripts\setup-deps.ps1) only for a Python to test against. -->
     <ItemGroup Label="ProjectConfigurations">
         <ProjectConfiguration Include="Debug|x64">
             <Configuration>Debug</Configuration>
@@ -47,7 +42,6 @@
         <Import Project="$(MSBuildThisFileDirectory)..\..\BearApps.user.props" Condition="Exists('$(MSBuildThisFileDirectory)..\..\BearApps.user.props')"/>
     </ImportGroup>
     <PropertyGroup Label="UserMacros"/>
-    <!-- Say what is missing instead of failing on an include -->
     <Target Name="BearCheckPython" BeforeTargets="PrepareForBuild">
         <Error Condition="'$(PYTHONPATH)'=='' or !Exists('$(PYTHONPATH)\include\Python.h')" Text="Python not found at PYTHONPATH='$(PYTHONPATH)'. Run scripts\setup-deps.ps1, or set it in BearApps.user.props (see README)."/>
     </Target>
@@ -57,9 +51,8 @@
             <SDLCheck>true</SDLCheck>
             <ConformanceMode>true</ConformanceMode>
             <LanguageStandard>stdcpplatest</LanguageStandard>
-            <!-- ..\ for PythonLocator.h, PCH.h and Coord.h; same limited API as the plugin -->
             <PreprocessorDefinitions>Py_LIMITED_API=0x03080000;_CONSOLE;PYTHON_HOME_DIR=$(PYTHONPATH.Replace('\', '/'));%(PreprocessorDefinitions)</PreprocessorDefinitions>
-            <AdditionalIncludeDirectories>..\;..\..\ThirdParty\googletest\googletest\include;$(PYTHONPATH)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <AdditionalIncludeDirectories>..\;..\..\;..\..\ThirdParty\googletest\googletest\include;$(PYTHONPATH)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
         </ClCompile>
         <Link>
             <SubSystem>Console</SubSystem>
@@ -89,16 +82,15 @@
         <ClCompile Include="main.cpp"/>
         <ClCompile Include="Probe.cpp"/>
         <ClCompile Include="PythonLocatorTests.cpp"/>
-        <ClCompile Include="..\PythonLocator.cpp">
+        <ClCompile Include="..\Python\PythonLocator.cpp">
             <PrecompiledHeader>NotUsing</PrecompiledHeader>
         </ClCompile>
     </ItemGroup>
     <ItemGroup>
         <ClInclude Include="Probe.h"/>
-        <ClInclude Include="..\PythonLocator.h"/>
+        <ClInclude Include="..\Python\PythonLocator.h"/>
     </ItemGroup>
     <ItemGroup>
-        <!-- Static lib, linked automatically -->
         <ProjectReference Include="..\..\ThirdParty\gtest\gtest.vcxproj">
             <Project>{3c17b98f-54a2-4b3f-bc3c-a6c60b2af880}</Project>
         </ProjectReference>
@@ -106,6 +98,5 @@
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
     <ImportGroup Label="ExtensionTargets">
     </ImportGroup>
-    <!-- shortcut: Rider's C++ MSBuild build invokes this project with /t:PythonLocatorTests (project name as target); alias it to Build. -->
     <Target Name="PythonLocatorTests" DependsOnTargets="Build"/>
 </Project>

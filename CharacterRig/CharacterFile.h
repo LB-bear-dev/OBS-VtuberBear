@@ -1,5 +1,6 @@
 #pragma once
 #include <optional>
+#include "CharacterControlCore/CoreTypes.h"
 
 namespace CharacterControlOBS
 {

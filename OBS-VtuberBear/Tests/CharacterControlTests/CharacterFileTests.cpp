@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <string>
 #include "PCH.h"
-#include "CharacterFile.h"
+#include "CharacterRig/CharacterFile.h"
 #include "ObsStubs.h"
 #include "TestSupport.h"
 

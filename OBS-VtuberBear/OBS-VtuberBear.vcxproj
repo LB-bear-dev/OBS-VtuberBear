@@ -54,8 +54,6 @@
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
         <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     </PropertyGroup>
-    <!-- Run/debug launches OBS (OBSEXE is its bin\64bit folder, see PropertySheet2.props) with the plugin deployed by the post-build copy.
-         Its updater and missing-files dialogs are switched off so nothing modal waits behind the debugger. -->
     <PropertyGroup>
         <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
         <LocalDebuggerCommand>$([MSBuild]::EnsureTrailingSlash('$(OBSEXE)'))obs64.exe</LocalDebuggerCommand>
@@ -69,7 +67,7 @@
             <PreprocessorDefinitions>_DEBUG;QT_NO_DEBUG_STREAM;QT_NO_VERSION_TAGGING;Py_LIMITED_API=0x03080000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
             <ConformanceMode>true</ConformanceMode>
             <LanguageStandard>stdcpp20</LanguageStandard>
-            <AdditionalIncludeDirectories>$(OBSPATH)\..\libobs;$(OBSPATH)\config;..\;..\ThirdParty\psd_sdk\src;$(DiscordBearDir)include;$(QTPATH)\include;$(PYTHONPATH)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <AdditionalIncludeDirectories>$(ProjectDir);$(OBSPATH)\..\libobs;$(OBSPATH)\config;..\;..\ThirdParty\psd_sdk\src;$(DiscordBearDir)include;$(QTPATH)\include;$(PYTHONPATH)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
             <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
             <PrecompiledHeader>Use</PrecompiledHeader>
             <PrecompiledHeaderFile>PCH.h</PrecompiledHeaderFile>
@@ -91,8 +89,7 @@
             <PreprocessorDefinitions>NDEBUG;QT_NO_DEBUG_STREAM;__INSURE__;QT_NO_VERSION_TAGGING;Py_LIMITED_API=0x03080000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
             <ConformanceMode>true</ConformanceMode>
             <LanguageStandard>stdcpp20</LanguageStandard>
-            <AdditionalIncludeDirectories>$(OBSPATH)\..\libobs;$(OBSPATH)\config;..\;..\ThirdParty\psd_sdk\src;$(DiscordBearDir)include;$(QTPATH)\include;$(PYTHONPATH)\include</AdditionalIncludeDirectories>
-            <!-- The linker's /GUARD:CF and /GUARD:EHCONT need every module compiled with them. -->
+            <AdditionalIncludeDirectories>$(ProjectDir);$(OBSPATH)\..\libobs;$(OBSPATH)\config;..\;..\ThirdParty\psd_sdk\src;$(DiscordBearDir)include;$(QTPATH)\include;$(PYTHONPATH)\include</AdditionalIncludeDirectories>
             <ControlFlowGuard>Guard</ControlFlowGuard>
             <AdditionalOptions>/Zc:__cplusplus /guard:ehcont %(AdditionalOptions)</AdditionalOptions>
             <LanguageStandard_C>stdclatest</LanguageStandard_C>
@@ -106,67 +103,65 @@
             <DelayLoadDLLs>python3.dll</DelayLoadDLLs>
             <AdditionalLibraryDirectories>$(OBSPATH)\libobs\RelWithDebInfo;$(OBSPATH)\deps\w32-pthreads\RelWithDebInfo;$(DiscordBearDir)$(Configuration);$(QTPATH)\lib;$(PYTHONPATH)\libs</AdditionalLibraryDirectories>
             <AdditionalDependencies>DiscordBear.lib;obs.lib;w32-pthreads.lib;delayimp.lib;Qt6Core.lib;Qt6Gui.lib;Qt6Widgets.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-            <!-- Control Flow Guard and EH continuation metadata for the psd_sdk code built with /guard:cf, and CET shadow stack support. -->
             <AdditionalOptions>/VERBOSE:LIB /GUARD:CF /GUARD:EHCONT /CETCOMPAT %(AdditionalOptions)</AdditionalOptions>
         </Link>
         <CustomBuildStep/>
     </ItemDefinitionGroup>
-    <!-- Release builds can stamp their version: msbuild /p:PluginVersion=1.2.3 (falls back to plugin-macros.h). -->
     <ItemDefinitionGroup Condition="'$(PluginVersion)'!=''">
         <ClCompile>
             <PreprocessorDefinitions>PLUGIN_VERSION="$(PluginVersion)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
         </ClCompile>
     </ItemDefinitionGroup>
     <ItemGroup>
-        <ClInclude Include="ActiveCharacters.h"/>
-        <ClInclude Include="Attribute.h"/>
-        <ClInclude Include="Character.h"/>
-        <ClInclude Include="CharacterFile.h"/>
-        <ClInclude Include="CharacterSource.h"/>
-        <ClInclude Include="Coord.h"/>
-        <ClInclude Include="DiscordComponent.h"/>
-        <ClInclude Include="DiscordDock.h"/>
-        <ClInclude Include="DiscordVoice.h"/>
-        <ClInclude Include="ImageLayer.h"/>
-        <ClInclude Include="Messaging.h"/>
         <ClInclude Include="PCH.h"/>
-        <ClInclude Include="PathRules.h"/>
-        <ClInclude Include="PythonLocator.h"/>
-        <ClInclude Include="WatchedPythonScript.h"/>
-        <ClInclude Include="PythonInterface.h"/>
-        <ClInclude Include="VoiceRoster.h"/>
-        <ClInclude Include="WatchedImage.h"/>
         <ClInclude Include="plugin-macros.h"/>
+        <ClInclude Include="Characters\ActiveCharacters.h"/>
+        <ClInclude Include="Characters\Attribute.h"/>
+        <ClInclude Include="Characters\Character.h"/>
+        <ClInclude Include="Characters\CharacterSource.h"/>
+        <ClInclude Include="Discord\DiscordComponent.h"/>
+        <ClInclude Include="Discord\DiscordDock.h"/>
+        <ClInclude Include="Discord\DiscordVoice.h"/>
+        <ClInclude Include="Discord\VoiceRoster.h"/>
+        <ClInclude Include="Python\PythonInterface.h"/>
+        <ClInclude Include="Python\PythonLocator.h"/>
+        <ClInclude Include="Python\WatchedPythonScript.h"/>
+        <ClInclude Include="Render\Coord.h"/>
+        <ClInclude Include="Render\ImageLayer.h"/>
+        <ClInclude Include="Render\WatchedImage.h"/>
+        <ClInclude Include="..\CharacterControlCore\CoreTypes.h"/>
+        <ClInclude Include="..\CharacterControlCore\Messaging.h"/>
+        <ClInclude Include="..\CharacterControlCore\WatchedFile.h"/>
     </ItemGroup>
     <ItemGroup>
-        <ClCompile Include="ActiveCharacters.cpp"/>
-        <ClCompile Include="Character.cpp"/>
-        <ClCompile Include="CharacterFile.cpp"/>
-        <ClCompile Include="DiscordComponent.cpp"/>
-        <ClCompile Include="DiscordDock.cpp"/>
-        <ClCompile Include="DiscordVoice.cpp"/>
-        <ClCompile Include="ImageLayer.cpp"/>
         <ClCompile Include="PCH.cpp">
             <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
             <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
         </ClCompile>
-        <ClCompile Include="PathRules.cpp"/>
         <ClCompile Include="plugin-main.cpp"/>
-        <ClCompile Include="PythonInterface.cpp"/>
-        <ClCompile Include="PythonLocator.cpp"/>
-        <ClCompile Include="ScriptedCharacter.cpp"/>
-        <ClCompile Include="SimpleCharacter.cpp"/>
-        <ClCompile Include="WatchedPythonScript.cpp"/>
-        <ClCompile Include="VoiceRoster.cpp"/>
-        <ClCompile Include="WatchedImage.cpp"/>
+        <ClCompile Include="Characters\ActiveCharacters.cpp"/>
+        <ClCompile Include="Characters\Character.cpp"/>
+        <ClCompile Include="Characters\ScriptedCharacter.cpp"/>
+        <ClCompile Include="Characters\SimpleCharacter.cpp"/>
+        <ClCompile Include="Discord\DiscordComponent.cpp"/>
+        <ClCompile Include="Discord\DiscordDock.cpp"/>
+        <ClCompile Include="Discord\DiscordVoice.cpp"/>
+        <ClCompile Include="Discord\VoiceRoster.cpp"/>
+        <ClCompile Include="Python\PythonInterface.cpp"/>
+        <ClCompile Include="Python\PythonLocator.cpp"/>
+        <ClCompile Include="Python\WatchedPythonScript.cpp"/>
+        <ClCompile Include="Render\ImageLayer.cpp"/>
+        <ClCompile Include="Render\WatchedImage.cpp"/>
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config"/>
     </ItemGroup>
     <ItemGroup>
-        <!-- Static lib built from the ThirdParty\psd_sdk submodule, linked automatically -->
         <ProjectReference Include="..\ThirdParty\psd\psd.vcxproj">
             <Project>{b4d611bc-58f9-4352-b217-c8217acbf057}</Project>
+        </ProjectReference>
+        <ProjectReference Include="..\CharacterRig\CharacterRig.vcxproj">
+            <Project>{30ef6d50-0c38-4d53-b3f7-adb6d97fd092}</Project>
         </ProjectReference>
     </ItemGroup>
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
@@ -179,16 +174,10 @@
         </PropertyGroup>
         <Error Condition="!Exists('..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets'))"/>
     </Target>
-    <!-- shortcut: Rider's C++ MSBuild build invokes this project with /t:DiscordBearTests (project name as target); alias it to Build, same as DiscordBear.vcxproj. -->
     <Target Name="DiscordBearTests" DependsOnTargets="Build"/>
-    <!-- DiscordBear.dll ships next to the plugin, so the staged one (see DiscordBearDir in PropertySheet2.props) goes next to
-         the build output before the post-build step deploys that folder to OBS. CI's packaging picks it up from there too. -->
     <Target Name="BearCopyDiscordBear" BeforeTargets="PostBuildEvent">
         <Copy SourceFiles="$(DiscordBearDir)$(Configuration)\DiscordBear.dll" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true"/>
     </Target>
-    <!-- Stopping the debugger kills OBS, which leaves its run_* marker files in %APPDATA%\obs-studio\.sentinel; the next launch then
-         opens a "Crash or unclean shutdown detected" safe mode prompt (OBS has no switch to skip it). Clearing the markers on a deploying
-         Debug build keeps that prompt from sitting between you and the debugger. -->
     <Target Name="BearClearObsCrashMarkers" AfterTargets="Build" Condition="'$(DeployToOBS)'=='true' and '$(Configuration)'=='Debug' and Exists('$(APPDATA)\obs-studio\.sentinel')">
         <ItemGroup>
             <_BearObsCrashMarker Include="$(APPDATA)\obs-studio\.sentinel\run_*"/>

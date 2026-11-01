@@ -1,12 +1,12 @@
 #include "PCH.h"
-#include "WatchedImage.h"
+#include "Render/WatchedImage.h"
 
 #include <array>
 #include <memory>
 #include <optional>
 #include <obs-module.h>
 
-#include "Messaging.h"
+#include "CharacterControlCore/Messaging.h"
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif

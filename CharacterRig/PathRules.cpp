@@ -1,5 +1,4 @@
-#include "PCH.h"
-#include "PathRules.h"
+#include "CharacterRig/PathRules.h"
 
 std::optional<FilePath> CharacterControlOBS::ResolveInsideFolder(FilePathRef Folder, const Str& Utf8Path)
 {

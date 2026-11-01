@@ -31,7 +31,7 @@
 #include "PCH.h"
 #include "PsdBuilder.h"
 #include "TestSupport.h"
-#include "WatchedImage.h"
+#include "Render/WatchedImage.h"
 
 using namespace CharacterControlRender;
 using namespace CharacterControlTests;

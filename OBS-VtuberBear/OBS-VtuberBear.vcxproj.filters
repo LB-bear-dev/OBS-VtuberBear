@@ -1,153 +1,121 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="Characters">
+      <UniqueIdentifier>{39c5ee08-00ba-5355-afb9-9291908923eb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    <Filter Include="Discord">
+      <UniqueIdentifier>{0422fa3c-4f59-5b7f-8abc-a40d3fab1010}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Python">
+      <UniqueIdentifier>{fc958ea8-b0a0-56c4-84e2-a4528d312733}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Helpers">
-      <UniqueIdentifier>{681f45ed-2b5f-4acc-bc99-ee6cf2c398d8}</UniqueIdentifier>
+    <Filter Include="Render">
+      <UniqueIdentifier>{ac2534e3-2d81-5e5f-91c1-074843e115ee}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\CharacterInfo">
-      <UniqueIdentifier>{037b55b9-ff9a-42a0-b119-41c0ce2a47d7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\CharacterInfo">
-      <UniqueIdentifier>{a9b06f12-c8c9-4a7d-8dd3-39ec72b731b7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Render">
-      <UniqueIdentifier>{22932ad7-6656-42fd-8e98-2071c2264dd4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Render">
-      <UniqueIdentifier>{c2fd7924-a8f4-4ab5-8739-c1d79910e2f3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Sources">
-      <UniqueIdentifier>{681b68a6-b607-4501-a057-d242cf32eacf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Sources">
-      <UniqueIdentifier>{4b3fdb97-b9d4-4612-940d-42454f6ea812}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Components">
-      <UniqueIdentifier>{e5ba4ad9-4967-452b-a9b9-7410f8e317e8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Components">
-      <UniqueIdentifier>{02e879db-6847-4f89-9d27-a931091946fe}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Script">
-      <UniqueIdentifier>{6290c486-e7d9-4a68-be2a-5a46de084980}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Script">
-      <UniqueIdentifier>{7961e9ae-b0ce-4a12-a914-c33a5189242d}</UniqueIdentifier>
+    <Filter Include="CharacterControlCore">
+      <UniqueIdentifier>{212eb33e-f62c-5f5f-97e1-2d8131899cd0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="plugin-macros.h">
-      <Filter>Header Files</Filter>
+    <ClCompile Include="PCH.cpp"/>
+    <ClCompile Include="plugin-main.cpp"/>
+    <ClCompile Include="Characters\ActiveCharacters.cpp">
+      <Filter>Characters</Filter>
+    </ClCompile>
+    <ClCompile Include="Characters\Character.cpp">
+      <Filter>Characters</Filter>
+    </ClCompile>
+    <ClCompile Include="Characters\ScriptedCharacter.cpp">
+      <Filter>Characters</Filter>
+    </ClCompile>
+    <ClCompile Include="Characters\SimpleCharacter.cpp">
+      <Filter>Characters</Filter>
+    </ClCompile>
+    <ClCompile Include="Discord\DiscordComponent.cpp">
+      <Filter>Discord</Filter>
+    </ClCompile>
+    <ClCompile Include="Discord\DiscordDock.cpp">
+      <Filter>Discord</Filter>
+    </ClCompile>
+    <ClCompile Include="Discord\DiscordVoice.cpp">
+      <Filter>Discord</Filter>
+    </ClCompile>
+    <ClCompile Include="Discord\VoiceRoster.cpp">
+      <Filter>Discord</Filter>
+    </ClCompile>
+    <ClCompile Include="Python\PythonInterface.cpp">
+      <Filter>Python</Filter>
+    </ClCompile>
+    <ClCompile Include="Python\PythonLocator.cpp">
+      <Filter>Python</Filter>
+    </ClCompile>
+    <ClCompile Include="Python\WatchedPythonScript.cpp">
+      <Filter>Python</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\ImageLayer.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\WatchedImage.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PCH.h"/>
+    <ClInclude Include="plugin-macros.h"/>
+    <ClInclude Include="Characters\ActiveCharacters.h">
+      <Filter>Characters</Filter>
     </ClInclude>
-    <ClInclude Include="Messaging.h">
-      <Filter>Header Files\Helpers</Filter>
+    <ClInclude Include="Characters\Attribute.h">
+      <Filter>Characters</Filter>
     </ClInclude>
-    <ClInclude Include="WatchedImage.h">
-      <Filter>Header Files\Render</Filter>
+    <ClInclude Include="Characters\Character.h">
+      <Filter>Characters</Filter>
     </ClInclude>
-    <ClInclude Include="ImageLayer.h">
-      <Filter>Header Files\Render</Filter>
+    <ClInclude Include="Characters\CharacterSource.h">
+      <Filter>Characters</Filter>
     </ClInclude>
-    <ClInclude Include="Character.h">
-      <Filter>Header Files\CharacterInfo</Filter>
+    <ClInclude Include="Discord\DiscordComponent.h">
+      <Filter>Discord</Filter>
     </ClInclude>
-    <ClInclude Include="CharacterFile.h">
-      <Filter>Header Files\CharacterInfo</Filter>
+    <ClInclude Include="Discord\DiscordDock.h">
+      <Filter>Discord</Filter>
     </ClInclude>
-    <ClInclude Include="Coord.h">
-      <Filter>Header Files\Helpers</Filter>
+    <ClInclude Include="Discord\DiscordVoice.h">
+      <Filter>Discord</Filter>
     </ClInclude>
-    <ClInclude Include="PathRules.h">
-      <Filter>Header Files\Helpers</Filter>
+    <ClInclude Include="Discord\VoiceRoster.h">
+      <Filter>Discord</Filter>
     </ClInclude>
-    <ClInclude Include="CharacterSource.h">
-      <Filter>Header Files\Sources</Filter>
+    <ClInclude Include="Python\PythonInterface.h">
+      <Filter>Python</Filter>
     </ClInclude>
-    <ClInclude Include="ActiveCharacters.h">
-      <Filter>Header Files\CharacterInfo</Filter>
+    <ClInclude Include="Python\PythonLocator.h">
+      <Filter>Python</Filter>
     </ClInclude>
-    <ClInclude Include="Attribute.h">
-      <Filter>Header Files\CharacterInfo</Filter>
+    <ClInclude Include="Python\WatchedPythonScript.h">
+      <Filter>Python</Filter>
     </ClInclude>
-    <ClInclude Include="DiscordComponent.h">
-      <Filter>Header Files\Components</Filter>
+    <ClInclude Include="Render\Coord.h">
+      <Filter>Render</Filter>
     </ClInclude>
-    <ClInclude Include="DiscordDock.h">
-      <Filter>Header Files\Components</Filter>
+    <ClInclude Include="Render\ImageLayer.h">
+      <Filter>Render</Filter>
     </ClInclude>
-    <ClInclude Include="DiscordVoice.h">
-      <Filter>Header Files\Components</Filter>
+    <ClInclude Include="Render\WatchedImage.h">
+      <Filter>Render</Filter>
     </ClInclude>
-    <ClInclude Include="VoiceRoster.h">
-      <Filter>Header Files\Components</Filter>
+    <ClInclude Include="..\CharacterControlCore\CoreTypes.h">
+      <Filter>CharacterControlCore</Filter>
     </ClInclude>
-    <ClInclude Include="PythonInterface.h">
-      <Filter>Header Files\Script</Filter>
+    <ClInclude Include="..\CharacterControlCore\Messaging.h">
+      <Filter>CharacterControlCore</Filter>
     </ClInclude>
-    <ClInclude Include="WatchedPythonScript.h">
-      <Filter>Header Files\Script</Filter>
-    </ClInclude>
-    <ClInclude Include="PCH.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\CharacterControlCore\WatchedFile.h">
+      <Filter>CharacterControlCore</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="plugin-main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WatchedImage.cpp">
-      <Filter>Source Files\Render</Filter>
-    </ClCompile>
-    <ClCompile Include="Character.cpp">
-      <Filter>Source Files\CharacterInfo</Filter>
-    </ClCompile>
-    <ClCompile Include="CharacterFile.cpp">
-      <Filter>Source Files\CharacterInfo</Filter>
-    </ClCompile>
-    <ClCompile Include="ImageLayer.cpp">
-      <Filter>Source Files\Render</Filter>
-    </ClCompile>
-    <ClCompile Include="ActiveCharacters.cpp">
-      <Filter>Source Files\CharacterInfo</Filter>
-    </ClCompile>
-    <ClCompile Include="DiscordComponent.cpp">
-      <Filter>Source Files\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="DiscordDock.cpp">
-      <Filter>Source Files\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="DiscordVoice.cpp">
-      <Filter>Source Files\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="VoiceRoster.cpp">
-      <Filter>Source Files\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="WatchedPythonScript.cpp">
-      <Filter>Source Files\Script</Filter>
-    </ClCompile>
-    <ClCompile Include="PCH.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PathRules.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SimpleCharacter.cpp">
-      <Filter>Source Files\Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="ScriptedCharacter.cpp">
-      <Filter>Source Files\Sources</Filter>
-    </ClCompile>
+    <None Include="packages.config"/>
   </ItemGroup>
 </Project>

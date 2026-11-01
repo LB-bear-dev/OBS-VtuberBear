@@ -18,9 +18,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "PCH.h"
 #include <obs-module.h>
-#include "DiscordComponent.h"
-#include "DiscordDock.h"
-#include "Messaging.h"
+#include "Discord/DiscordComponent.h"
+#include "Discord/DiscordDock.h"
+#include "CharacterControlCore/Messaging.h"
 #include "plugin-macros.h"
 
 OBS_DECLARE_MODULE()

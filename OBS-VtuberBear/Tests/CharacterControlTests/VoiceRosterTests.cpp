@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include "PCH.h"
-#include "VoiceRoster.h"
+#include "Discord/VoiceRoster.h"
 
 using namespace CharacterControlOBS;
 using DiscordBear::SpeakingStatus;

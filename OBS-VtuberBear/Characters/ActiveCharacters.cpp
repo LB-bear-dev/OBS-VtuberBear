@@ -1,8 +1,8 @@
 #include "PCH.h"
-#include "ActiveCharacters.h"
+#include "Characters/ActiveCharacters.h"
 #include <array>
 #include <shlobj_core.h>
-#include "Messaging.h"
+#include "CharacterControlCore/Messaging.h"
 
 std::optional<std::filesystem::path> CharacterControlOBS::GetGlobalSettingsPath()
 {

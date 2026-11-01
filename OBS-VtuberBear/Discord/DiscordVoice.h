@@ -3,7 +3,7 @@
 #include <map>
 #include <mutex>
 #include <optional>
-#include "VoiceRoster.h"
+#include "Discord/VoiceRoster.h"
 
 namespace CharacterControlOBS
 {

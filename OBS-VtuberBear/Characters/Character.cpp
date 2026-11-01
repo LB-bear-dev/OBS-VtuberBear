@@ -1,8 +1,8 @@
 #include "PCH.h"
-#include "Character.h"
-#include "PythonInterface.h"
-#include "WatchedImage.h"
-#include "WatchedPythonScript.h"
+#include "Characters/Character.h"
+#include "Python/PythonInterface.h"
+#include "Render/WatchedImage.h"
+#include "Python/WatchedPythonScript.h"
 
 using namespace CharacterControlOBS;
 

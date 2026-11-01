@@ -1,12 +1,10 @@
-
-#include "PCH.h"
-#include "CharacterFile.h"
+#include "CharacterRig/CharacterFile.h"
 #include <fstream>
 #include <iterator>
 #include <nlohmann/json.hpp>
 #include <util/base.h>
-#include "Messaging.h"
-#include "PathRules.h"
+#include "CharacterControlCore/Messaging.h"
+#include "CharacterRig/PathRules.h"
 
 namespace
 {

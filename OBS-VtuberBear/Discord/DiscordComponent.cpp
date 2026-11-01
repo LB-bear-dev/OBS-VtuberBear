@@ -1,7 +1,7 @@
 #include "PCH.h"
-#include "DiscordComponent.h"
+#include "Discord/DiscordComponent.h"
 #include <optional>
-#include "DiscordVoice.h"
+#include "Discord/DiscordVoice.h"
 
 namespace
 {

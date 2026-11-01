@@ -1,6 +1,7 @@
 #include "PCH.h"
-#include "VoiceRoster.h"
+#include "Discord/VoiceRoster.h"
 #include <algorithm>
+#include <ranges>
 #include <tuple>
 
 using namespace CharacterControlOBS;
@@ -57,16 +58,17 @@ std::vector<VoiceRoster::MemberState> VoiceRoster::GetMembers() const
 		std::scoped_lock Lock(Mutex);
 		Result.reserve(Members.size());
 
-		for(const auto& [Id, Member] : Members)
+		for(const auto& Member : Members | std::views::values)
 		{
 			Result.push_back(Member);
 		}
 	}
 
-	std::ranges::sort(Result, [](const MemberState& Left, const MemberState& Right)
-	{
-		return std::tie(Left.Member.Name, Left.Member.User) < std::tie(Right.Member.Name, Right.Member.User);
-	});
+	std::ranges::sort(Result,
+		[](const MemberState& Left, const MemberState& Right)
+		{
+			return std::tie(Left.Member.Name, Left.Member.User) < std::tie(Right.Member.Name, Right.Member.User);
+		});
 
 	return Result;
 }
@@ -113,9 +115,9 @@ void VoiceRoster::SetStatus(const SpeakingStatus NewStatus)
 
 	if(NewStatus != SpeakingStatus::Connected)
 	{
-		for(auto& [Id, Member] : Members)
+		for(auto& [Member, Speaking] : Members | std::views::values)
 		{
-			Member.Speaking = false;
+			Speaking = false;
 		}
 	}
 }

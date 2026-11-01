@@ -2,10 +2,10 @@
 #include <fstream>
 #include <optional>
 #include <nlohmann/json.hpp>
-#include "CharacterSource.h"
-#include "Messaging.h"
-#include "PathRules.h"
-#include "PythonInterface.h"
+#include "Characters/CharacterSource.h"
+#include "CharacterControlCore/Messaging.h"
+#include "CharacterRig/PathRules.h"
+#include "Python/PythonInterface.h"
 
 using namespace CharacterControlOBS;
 using namespace CharacterControlRender;

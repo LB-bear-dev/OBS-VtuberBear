@@ -1,9 +1,9 @@
 #include "PCH.h"
-#include "DiscordVoice.h"
+#include "Discord/DiscordVoice.h"
 #include <fstream>
 #include <obs-module.h>
 #include <nlohmann/json.hpp>
-#include "Messaging.h"
+#include "CharacterControlCore/Messaging.h"
 
 using namespace CharacterControlOBS;
 

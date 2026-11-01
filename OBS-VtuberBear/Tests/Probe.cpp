@@ -13,7 +13,7 @@
 #else
 #include <Python.h>
 #endif
-#include "../PythonLocator.h"
+#include "Python/PythonLocator.h"
 
 using namespace CharacterControlScript;
 

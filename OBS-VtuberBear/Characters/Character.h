@@ -1,9 +1,9 @@
 #pragma once
 #include <obs-module.h>
-#include "Attribute.h"
-#include "ImageLayer.h"
-#include "WatchedImage.h"
-#include "WatchedPythonScript.h"
+#include "Characters/Attribute.h"
+#include "Render/ImageLayer.h"
+#include "Render/WatchedImage.h"
+#include "Python/WatchedPythonScript.h"
 
 namespace CharacterControlOBS
 {

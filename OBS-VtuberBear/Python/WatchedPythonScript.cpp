@@ -1,6 +1,6 @@
 #include "PCH.h"
-#include "WatchedPythonScript.h"
-#include "PythonInterface.h"
+#include "Python/WatchedPythonScript.h"
+#include "Python/PythonInterface.h"
 
 PyObject* CharacterControlScript::WatchedPythonScript::Call(const std::string& FnName, PyObject* Args) const
 {

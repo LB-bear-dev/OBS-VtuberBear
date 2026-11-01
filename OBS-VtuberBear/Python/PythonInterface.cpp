@@ -1,12 +1,12 @@
 #include "PCH.h"
-#include "PythonInterface.h"
+#include "Python/PythonInterface.h"
 #include <mutex>
 #include <obs-module.h>
 #include <util/bmem.h>
 #include <util/config-file.h>
 #include <util/platform.h>
-#include "Messaging.h"
-#include "PythonLocator.h"
+#include "CharacterControlCore/Messaging.h"
+#include "Python/PythonLocator.h"
 
 using namespace CharacterControlScript;
 
