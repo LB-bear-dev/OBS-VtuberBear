@@ -12,3 +12,9 @@ std::optional<FilePath> CharacterControlOBS::ResolveInsideFolder(FilePathRef Fol
 
 	return Folder / Relative;
 }
+
+Str CharacterControlOBS::LogPath(FilePathRef Path)
+{
+	const std::u8string Utf8 = Path.u8string();
+	return {Utf8.begin(), Utf8.end()};
+}

@@ -83,6 +83,7 @@
         <ClCompile Include="CharacterFileTests.cpp"/>
         <ClCompile Include="ConditionTests.cpp"/>
         <ClCompile Include="PathRulesTests.cpp"/>
+        <ClCompile Include="RigTests.cpp" />
         <ClCompile Include="VoiceRosterTests.cpp"/>
         <ClCompile Include="PsdFuzzTests.cpp" />
         <ClCompile Include="WatchedFileTests.cpp"/>

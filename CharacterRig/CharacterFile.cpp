@@ -10,13 +10,6 @@ namespace
 {
 constexpr auto CHARACTER_FILE_NAME = "character.json";
 
-// The path as UTF-8, which is what OBS's log takes. string() would throw on a name the system code page can't hold.
-Str LogPath(FilePathRef Path)
-{
-	const std::u8string Utf8 = Path.u8string();
-	return {Utf8.begin(), Utf8.end()};
-}
-
 // Reads a required field holding a path inside the character's folder
 std::optional<FilePath> ReadPathField(const nlohmann::json& Json, const char* Field, FilePathRef Folder, const char* LogName)
 {

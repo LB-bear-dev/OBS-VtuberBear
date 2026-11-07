@@ -9,13 +9,17 @@
     <ClCompile Include="Attribute.cpp"/>
     <ClCompile Include="CharacterFile.cpp"/>
     <ClCompile Include="Condition.cpp"/>
+    <ClCompile Include="JsonParser.cpp"/>
     <ClCompile Include="PathRules.cpp"/>
+    <ClCompile Include="Rig.cpp"/>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attribute.h"/>
     <ClInclude Include="CharacterFile.h"/>
     <ClInclude Include="Condition.h"/>
+    <ClInclude Include="JsonParser.h"/>
     <ClInclude Include="PathRules.h"/>
+    <ClInclude Include="Rig.h"/>
     <ClInclude Include="..\CharacterControlCore\CoreTypes.h">
       <Filter>CharacterControlCore</Filter>
     </ClInclude>
