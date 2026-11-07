@@ -2,9 +2,12 @@
 #include <gtest/gtest.h>
 #include "ObsStubs.h"
 #include "PCH.h"
+#include "TestSupport.h"
+#include "CharacterRig/PathRules.h"
 #include "CharacterRig/Rig.h"
 
 using namespace CharacterControlOBS;
+using namespace CharacterControlTests;
 
 namespace
 {
@@ -209,4 +212,39 @@ TEST_F(RigTest, SaysWhichRuleHasABadCondition)
 	ExpectRefused(R"({"layers": [{"name": "body", "slots": ["talking"]}], "slots": [{"name": "talking", "values": ["not_talking", "talking"], "rules": [{"value": "talking", "when": {"attr": "Talking", "gt": true}}]}]})",
 		"slot \"talking\" rule 1 has an invalid condition.");
 	EXPECT_TRUE(ObsStubs::LogContains("The condition on \"Talking\" can't use \"gt\" with a value of type bool."));
+}
+
+TEST_F(RigTest, LoadsTheRigFile)
+{
+	const TempDir Dir;
+	const FilePath Path = Dir.File("rig.json");
+	WriteText(Path, R"({"layers": [{"name": "body", "slots": ["talking"]}], "slots": [{"name": "talking", "values": ["not_talking", "talking"]}]})");
+
+	const std::optional<Rig> Result = LoadRig(Path);
+
+	ASSERT_TRUE(Result);
+	ASSERT_EQ(Result->Layers.size(), 1u);
+	EXPECT_EQ(Result->Layers[0], (RigLayer{.Name = "body", .Parent = {}, .Slots = {"talking"}}));
+	ASSERT_EQ(Result->Slots.size(), 1u);
+	EXPECT_EQ(Result->Slots[0], (RigSlot{.Name = "talking", .Values = {"not_talking", "talking"}, .Rules = {}}));
+	EXPECT_TRUE(ObsStubs::LogMessages().empty());
+}
+
+TEST_F(RigTest, SaysWhenThereIsNoRigFile)
+{
+	const TempDir Dir;
+
+	EXPECT_EQ(LoadRig(Dir.File("rig.json")), std::nullopt);
+	EXPECT_TRUE(ObsStubs::LogContains("Cannot open"));
+	EXPECT_TRUE(ObsStubs::LogContains("rig.json"));
+}
+
+TEST_F(RigTest, NamesTheLoadedFileWhenItIsRefused)
+{
+	const TempDir Dir;
+	const FilePath Path = Dir.File("rig.json");
+	WriteText(Path, R"({"layers": [{"name": "head", "parent": "body"}]})");
+
+	EXPECT_EQ(LoadRig(Path), std::nullopt);
+	EXPECT_TRUE(ObsStubs::LogContains(LogPath(Path) + ": layer \"head\" has parent \"body\", which isn't a layer."));
 }
