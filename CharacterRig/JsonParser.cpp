@@ -30,25 +30,6 @@ std::optional<nlohmann::json> JsonParser::ParseObject(const Str& Text) const
 	return Json;
 }
 
-bool JsonParser::HasOnlyKeys(const nlohmann::json& Json, const std::initializer_list<const char*> Keys) const
-{
-	for(const auto& Item : Json.items())
-	{
-		const auto IsItem = [&Item](const char* Key)
-		{
-			return Item.key() == Key;
-		};
-
-		if(std::ranges::none_of(Keys, IsItem))
-		{
-			ERROR_("%s: unknown key \"%s\"", LogName.c_str(), Item.key().c_str());
-			return false;
-		}
-	}
-
-	return true;
-}
-
 std::optional<StrId> JsonParser::ReadName(const nlohmann::json& Json, const char* Field) const
 {
 	const auto Found = Json.find(Field);

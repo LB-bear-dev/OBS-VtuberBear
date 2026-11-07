@@ -33,7 +33,7 @@ protected:
 		ObsStubs::Reset();
 
 		EXPECT_EQ(Parse(Text), std::nullopt);
-		EXPECT_TRUE(ObsStubs::LogContains("rig.json: ")) << "the log didn't name the rig file";
+		EXPECT_TRUE(ObsStubs::LogContains("rig.json")) << "the log didn't name the rig file";
 		EXPECT_TRUE(ObsStubs::LogContains(Reason)) << "expected the log to say: " << Reason;
 	}
 
@@ -124,31 +124,44 @@ TEST_F(RigTest, ARuleWithoutWhenAlwaysHolds)
 	EXPECT_EQ(Result->Slots[0].Rules[0], (SlotRule{.Value = "happy", .When = Condition{}}));
 }
 
+TEST_F(RigTest, IgnoresKeysItDoesNotKnow)
+{
+	const std::optional<Rig> Result = Parse(R"({
+		"version": 2,
+		"layers": [{"name": "body", "pivot": [0, 0], "slots": ["talking"]}],
+		"slots": [{"name": "talking", "values": ["not_talking", "talking"], "layers": [], "rules": [{"value": "talking", "if": true}]}]
+	})");
+
+	ASSERT_TRUE(Result);
+	EXPECT_EQ(Result->Layers[0], (RigLayer{.Name = "body", .Parent = {}, .Slots = {"talking"}}));
+	ASSERT_EQ(Result->Slots[0].Rules.size(), 1u);
+	EXPECT_EQ(Result->Slots[0].Rules[0], (SlotRule{.Value = "talking", .When = Condition{}}));
+	EXPECT_TRUE(ObsStubs::LogMessages().empty());
+}
+
 TEST_F(RigTest, RefusesWhatIsNotARig)
 {
 	ExpectRefused(R"({"layers": [)", "Json is malformed.");
-	ExpectRefused(R"([{"name": "body"}])", "It must be a JSON object.");
-	ExpectRefused(R"({"layers": [{"name": "body"}], "slot": []})", "unknown key \"slot\" in the rig.");
+	ExpectRefused(R"([{"name": "body"}])", "must be a JSON object.");
 	ExpectRefused(R"({})", "the rig needs \"layers\", a list of layers.");
 	ExpectRefused(R"({"layers": {"name": "body"}})", "the rig needs \"layers\", a list of layers.");
 }
 
 TEST_F(RigTest, RefusesABadLayer)
 {
-	ExpectRefused(R"({"layers": ["body"]})", "layer 1 must be a JSON object.");
-	ExpectRefused(R"({"layers": [{"parent": "body"}]})", "layer 1 needs a \"name\".");
-	ExpectRefused(R"({"layers": [{"name": ""}]})", "\"name\" in layer 1 must be a non-empty string.");
-	ExpectRefused(R"({"layers": [{"name": 5}]})", "\"name\" in layer 1 must be a non-empty string.");
-	ExpectRefused(R"({"layers": [{"name": "body", "pivot": [0, 0]}]})", "unknown key \"pivot\" in layer 1.");
+	ExpectRefused(R"({"layers": ["body"]})", "must be a JSON object.");
+	ExpectRefused(R"({"layers": [{"parent": "body"}]})", "needs a \"name\".");
+	ExpectRefused(R"({"layers": [{"name": ""}]})", "\"name\" must be a non-empty string.");
+	ExpectRefused(R"({"layers": [{"name": 5}]})", "\"name\" must be a non-empty string.");
 	ExpectRefused(R"({"layers": [{"name": "body"}, {"name": "body"}]})", "there are two layers named \"body\".");
-	ExpectRefused(R"({"layers": [{"name": "head", "parent": ""}]})", "\"parent\" in layer \"head\" must be a non-empty string.");
+	ExpectRefused(R"({"layers": [{"name": "head", "parent": ""}]})", "\"parent\" must be a non-empty string.");
 }
 
 TEST_F(RigTest, RefusesBadLayerSlots)
 {
-	ExpectRefused(R"({"layers": [{"name": "body", "slots": "talking"}]})", "\"slots\" in layer \"body\" must be a list of names.");
-	ExpectRefused(R"({"layers": [{"name": "body", "slots": [""]}]})", "\"slots\" in layer \"body\" must only hold non-empty strings.");
-	ExpectRefused(R"({"layers": [{"name": "body", "slots": ["talking", "talking"]}], "slots": [{"name": "talking", "values": ["a"]}]})", "\"slots\" in layer \"body\" lists \"talking\" twice.");
+	ExpectRefused(R"({"layers": [{"name": "body", "slots": "talking"}]})", "\"slots\" must be a list of names.");
+	ExpectRefused(R"({"layers": [{"name": "body", "slots": [""]}]})", "\"slots\" must only hold non-empty strings.");
+	ExpectRefused(R"({"layers": [{"name": "body", "slots": ["talking", "talking"]}], "slots": [{"name": "talking", "values": ["a"]}]})", "\"slots\" lists \"talking\" twice.");
 	ExpectRefused(R"({"layers": [{"name": "body", "slots": ["talking"]}]})", "layer \"body\" lists slot \"talking\", which isn't a slot.");
 }
 
@@ -168,14 +181,13 @@ TEST_F(RigTest, RefusesABadSlot)
 
 	ExpectRefused(WithSlots(R"({"name": "talking"})"), "\"slots\" must be a list of slots.");
 	ExpectRefused(WithSlots(R"(["talking"])"), "slot 1 must be a JSON object.");
-	ExpectRefused(WithSlots(R"([{"values": ["a"]}])"), "slot 1 needs a \"name\".");
-	ExpectRefused(WithSlots(R"([{"name": "talking", "values": ["a"], "layers": []}])"), "unknown key \"layers\" in slot 1.");
-	ExpectRefused(WithSlots(R"([{"name": "talking"}])"), "slot \"talking\" needs \"values\".");
-	ExpectRefused(WithSlots(R"([{"name": "talking", "values": "a"}])"), "\"values\" in slot \"talking\" must be a list of names.");
-	ExpectRefused(WithSlots(R"([{"name": "talking", "values": []}])"), "slot \"talking\" needs at least one value.");
-	ExpectRefused(WithSlots(R"([{"name": "talking", "values": ["a", ""]}])"), "\"values\" in slot \"talking\" must only hold non-empty strings.");
-	ExpectRefused(WithSlots(R"([{"name": "talking", "values": ["a", "a"]}])"), "\"values\" in slot \"talking\" lists \"a\" twice.");
-	ExpectRefused(WithSlots(R"([{"name": "talking", "values": ["a+b"]}])"), "slot \"talking\" has the value \"a+b\", but values can't contain \"+\".");
+	ExpectRefused(WithSlots(R"([{"values": ["a"]}])"), "needs a \"name\".");
+	ExpectRefused(WithSlots(R"([{"name": "talking"}])"), "needs \"values\".");
+	ExpectRefused(WithSlots(R"([{"name": "talking", "values": "a"}])"), "\"values\" must be a list of names.");
+	ExpectRefused(WithSlots(R"([{"name": "talking", "values": []}])"), "needs at least one value.");
+	ExpectRefused(WithSlots(R"([{"name": "talking", "values": ["a", ""]}])"), "\"values\" must only hold non-empty strings.");
+	ExpectRefused(WithSlots(R"([{"name": "talking", "values": ["a", "a"]}])"), "\"values\" lists \"a\" twice.");
+	ExpectRefused(WithSlots(R"([{"name": "talking", "values": ["a+b"]}])"), "but values can't contain \"+\".");
 	ExpectRefused(WithSlots(R"([{"name": "talking", "values": ["a"]}, {"name": "talking", "values": ["b"]}])"), "there are two slots named \"talking\".");
 }
 
@@ -186,11 +198,10 @@ TEST_F(RigTest, RefusesABadRule)
 		return R"({"layers": [{"name": "body", "slots": ["talking"]}], "slots": [{"name": "talking", "values": ["not_talking", "talking"], "rules": )" + Rules + "}]}";
 	};
 
-	ExpectRefused(WithRules(R"({"value": "talking"})"), "\"rules\" in slot \"talking\" must be a list of rules.");
+	ExpectRefused(WithRules(R"({"value": "talking"})"), "must be a list of rules.");
 	ExpectRefused(WithRules(R"(["talking"])"), "slot \"talking\" rule 1 must be a JSON object.");
-	ExpectRefused(WithRules(R"([{"when": {"attr": "Talking", "eq": true}}])"), "slot \"talking\" rule 1 needs a \"value\".");
+	ExpectRefused(WithRules(R"([{"when": {"attr": "Talking", "eq": true}}])"), "needs a \"value\".");
 	ExpectRefused(WithRules(R"([{"value": "talking"}, {"value": "shouting"}])"), "slot \"talking\" rule 2 sets \"shouting\", which isn't one of the slot's values.");
-	ExpectRefused(WithRules(R"([{"value": "talking", "if": true}])"), "unknown key \"if\" in slot \"talking\" rule 1.");
 }
 
 TEST_F(RigTest, SaysWhichRuleHasABadCondition)

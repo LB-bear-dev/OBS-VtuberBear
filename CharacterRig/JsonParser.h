@@ -1,5 +1,4 @@
 #pragma once
-#include <initializer_list>
 #include <optional>
 #include <vector>
 #include <nlohmann/json.hpp>
@@ -15,8 +14,6 @@ public:
 	[[nodiscard]] const Str& GetLogName() const;
 
 	[[nodiscard]] std::optional<nlohmann::json> ParseObject(const Str& Text) const;
-
-	[[nodiscard]] bool HasOnlyKeys(const nlohmann::json& Json, std::initializer_list<const char*> Keys) const;
 
 	[[nodiscard]] std::optional<StrId> ReadName(const nlohmann::json& Json, const char* Field) const;
 

@@ -82,7 +82,7 @@ std::optional<std::vector<RigLayer>> RigParser::ReadLayers(const nlohmann::json&
 		++Number;
 		if(!FoundLayer.is_object())
 		{
-			ERROR_("layer %s %d must be a JSON object.", GetLogName().c_str(), Number);
+			ERROR_("%s: layer %d must be a JSON object.", GetLogName().c_str(), Number);
 			return std::nullopt;
 		}
 
@@ -131,7 +131,7 @@ bool RigParser::CheckParents(const std::vector<RigLayer>& Layers) const
 {
 	for(const RigLayer& Layer : Layers)
 	{
-		if(!Layer.Parent.empty() && HasLayer(Layers, Layer.Parent))
+		if(!Layer.Parent.empty() && !HasLayer(Layers, Layer.Parent))
 		{
 			ERROR_("%s: layer \"%s\" has parent \"%s\", which isn't a layer.", GetLogName().c_str(), Layer.Name.c_str(), Layer.Parent.c_str());
 			return false;
@@ -146,7 +146,10 @@ bool RigParser::CheckParents(const std::vector<RigLayer>& Layers) const
 				return false;
 			}
 
-			Ancestor = std::ranges::find(Layers, Ancestor, &RigLayer::Name)->Parent;
+			if(const auto Found = std::ranges::find(Layers, Ancestor, &RigLayer::Name); Found != Layers.end())
+			{
+				Ancestor = Found->Parent;
+			}
 		}
 	}
 
@@ -214,7 +217,7 @@ std::optional<RigSlot> RigParser::ReadSlot(const nlohmann::json& Json, const int
 
 	if(Values->empty())
 	{
-		ERROR_("%s: %s needs at least one value.", GetLogName().c_str());
+		ERROR_("%s: %s needs at least one value.", GetLogName().c_str(), NumberContext.c_str());
 		return std::nullopt;
 	}
 
@@ -222,7 +225,7 @@ std::optional<RigSlot> RigParser::ReadSlot(const nlohmann::json& Json, const int
 	{
 		if(Value.find('+') != StrId::npos)
 		{
-			ERROR_("%s: %s has the value \"%s\", but values can't contain \"+\".", GetLogName().c_str(), Value.c_str());
+			ERROR_("%s: %s has the value \"%s\", but values can't contain \"+\".", GetLogName().c_str(), NumberContext.c_str(), Value.c_str());
 			return std::nullopt;
 		}
 	}
@@ -237,7 +240,7 @@ std::optional<RigSlot> RigParser::ReadSlot(const nlohmann::json& Json, const int
 
 	if(!Rules->is_array())
 	{
-		ERROR_("%s: \"rules\" in %s must be a list of rules.", GetLogName().c_str());
+		ERROR_("%s: \"rules\" in %s must be a list of rules.", GetLogName().c_str(), NumberContext.c_str());
 		return std::nullopt;
 	}
 
@@ -262,11 +265,6 @@ std::optional<SlotRule> RigParser::ReadRule(const nlohmann::json& Json, const in
 	if(!Json.is_object())
 	{
 		ERROR_("%s: %s must be a JSON object.", GetLogName().c_str(), Context.c_str());
-		return std::nullopt;
-	}
-
-	if(!HasOnlyKeys(Json, {"value", "when"}))
-	{
 		return std::nullopt;
 	}
 
