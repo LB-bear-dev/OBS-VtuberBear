@@ -1,0 +1,64 @@
+# User-specific files
+*.user
+*.suo
+*.sln.docstates
+*.DotSettings.user
+*.user.props
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+*.obj
+*.iobj
+*.ilk
+*.pch
+*.pdb
+*.ipdb
+*.tlog
+*.log
+*.tmp
+*.rsp
+*.binlog
+
+# Visual Studio and Rider caches
+.vs/
+ipch/
+*.aps
+*.ncb
+*.opendb
+*.VC.db
+*.VC.VC.opendb
+*.[Cc]ache
+!?*.[Cc]ache/
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NuGet
+packages/
+*.nupkg
+*.nuget.props
+*.nuget.targets
+
+# Python
+__pycache__/
+*.pyc
+
+# Dependencies staged outside git
+/deps/
+/ThirdParty/gtest/
+!/ThirdParty/DiscordBear/Debug/
+!/ThirdParty/DiscordBear/Release/
+!/ThirdParty/Psd/Debug/
+!/ThirdParty/Psd/Release/
+*.Dev.sln

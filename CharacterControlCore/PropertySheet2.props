@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildThisFileDirectory)..\BearApps.user.props" Condition="Exists('$(MSBuildThisFileDirectory)..\BearApps.user.props')" />
+  <PropertyGroup Label="UserMacros">
+    <QTPATH Condition="'$(QTPATH)'=='' and Exists('$(OBSPATH)\..\.deps')">$([System.IO.Directory]::GetDirectories('$(OBSPATH)\..\.deps', 'obs-deps-qt6-*-x64'))</QTPATH>
+    <OBSEXE Condition="'$(OBSEXE)'==''">$(OBSPATH)\rundir\RelWithDebInfo\bin\64bit\</OBSEXE>
+    <_BearObsPluginsDefaulted Condition="'$(OBSPLUGINS)'==''">true</_BearObsPluginsDefaulted>
+    <OBSPLUGINS Condition="'$(OBSPLUGINS)'==''">$(OBSPATH)\rundir\RelWithDebInfo\plugins</OBSPLUGINS>
+    <OBSPLUGINDIR>$(OBSPLUGINS)\OBS-VtuberBear</OBSPLUGINDIR>
+    <DiscordBearDir>$(MSBuildThisFileDirectory)..\ThirdParty\DiscordBear\</DiscordBearDir>
+    <PsdDir>$(MSBuildThisFileDirectory)..\ThirdParty\Psd\</PsdDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DeployToOBS Condition="'$(DeployToOBS)'=='' and '$(CI)'=='true'">false</DeployToOBS>
+    <DeployToOBS Condition="'$(DeployToOBS)'=='' and '$(_BearObsPluginsDefaulted)'=='true' and !Exists('$(OBSPLUGINS)')">false</DeployToOBS>
+    <DeployToOBS Condition="'$(DeployToOBS)'==''">true</DeployToOBS>
+  </PropertyGroup>
+  <Target Name="BearCheckDependencies" BeforeTargets="PrepareForBuild" Condition="'$(MSBuildProjectName)'=='OBS-VtuberBear'">
+    <PropertyGroup>
+      <_BearSetupHint>Set it in BearApps.user.props (see README).</_BearSetupHint>
+    </PropertyGroup>
+    <Error Condition="'$(OBSPATH)'=='' or !Exists('$(OBSPATH)\libobs')" Text="OBS not found in '$(OBSPATH)'" />
+    <Error Condition="'$(QTPATH)'=='' or !Exists('$(QTPATH)\include')" Text="Qt not found in '$(QTPATH)'" />
+    <Error Condition="!Exists('$(DiscordBearDir)$(Configuration)\DiscordBear.lib')" Text="DiscordBear not found in '$(DiscordBearDir)'" />
+    <Error Condition="!Exists('$(PsdDir)$(Configuration)\Psd.lib')" Text="Psd not found in '$(PsdDir)'" />
+  </Target>
+  <ItemDefinitionGroup>
+    <PostBuildEvent Condition="'$(DeployToOBS)'=='true'">
+      <Command>xcopy "$(SolutionDir)$(Platform)\$(Configuration)\*.dll" "$(OBSPLUGINDIR)\" /y
+xcopy "$(SolutionDir)$(Platform)\$(Configuration)\*.pdb" "$(OBSPLUGINDIR)\" /y</Command>
+    </PostBuildEvent>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(QTPATH)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="OBSPATH">
+      <Value>$(OBSPATH)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OBSEXE">
+      <Value>$(OBSEXE)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OBSPLUGINS">
+      <Value>$(OBSPLUGINS)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OBSPLUGINDIR">
+      <Value>$(OBSPLUGINDIR)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="QTPATH">
+      <Value>$(QTPATH)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OBS-VtuberBear", "OBS-VtuberBear\OBS-VtuberBear.vcxproj", "{3C349A86-4409-4B3D-8E58-957DDA5D9994}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CharacterRig", "CharacterRig\CharacterRig.vcxproj", "{30EF6D50-0C38-4D53-B3F7-ADB6D97FD092}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3C349A86-4409-4B3D-8E58-957DDA5D9994}.Debug|x64.ActiveCfg = Debug|x64
+		{3C349A86-4409-4B3D-8E58-957DDA5D9994}.Debug|x64.Build.0 = Debug|x64
+		{3C349A86-4409-4B3D-8E58-957DDA5D9994}.Release|x64.ActiveCfg = Release|x64
+		{3C349A86-4409-4B3D-8E58-957DDA5D9994}.Release|x64.Build.0 = Release|x64
+		{30EF6D50-0C38-4D53-B3F7-ADB6D97FD092}.Debug|x64.ActiveCfg = Debug|x64
+		{30EF6D50-0C38-4D53-B3F7-ADB6D97FD092}.Debug|x64.Build.0 = Debug|x64
+		{30EF6D50-0C38-4D53-B3F7-ADB6D97FD092}.Release|x64.ActiveCfg = Release|x64
+		{30EF6D50-0C38-4D53-B3F7-ADB6D97FD092}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DB779A7B-6937-4BA6-A1FB-59EE39714C65}
+		Qt5Version = 5.15.0_msvc2019_64
+	EndGlobalSection
+EndGlobal

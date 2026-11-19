@@ -1,0 +1,87 @@
+// Copyright (C) 2026 LB-bear-dev <lb_burr@outlook.com>
+#include "CharacterRig/JsonParser.h"
+#include <algorithm>
+#include <util/base.h>
+#include "CharacterControlCore/Messaging.h"
+
+using namespace CharacterControlOBS;
+
+JsonParser::JsonParser(Str InLogName) : LogName(std::move(InLogName)) {}
+
+const Str& JsonParser::GetLogName() const
+{
+	return LogName;
+}
+
+std::optional<nlohmann::json> JsonParser::ParseObject(const Str& Text) const
+{
+	nlohmann::json Json = nlohmann::json::parse(Text, nullptr, false);
+	if(Json.is_discarded())
+	{
+		ERROR_("%s is not valid JSON.", LogName.c_str());
+		return std::nullopt;
+	}
+
+	if(!Json.is_object())
+	{
+		ERROR_("%s is not a JSON object.", LogName.c_str());
+		return std::nullopt;
+	}
+
+	return Json;
+}
+
+std::optional<StrId> JsonParser::ReadName(const nlohmann::json& Json, const char* Field) const
+{
+	const auto Found = Json.find(Field);
+	if(Found == Json.end())
+	{
+		ERROR_("%s: \"%s\" is missing.", LogName.c_str(), Field);
+		return std::nullopt;
+	}
+
+	if(!Found->is_string() || Found->get_ref<const Str&>().empty())
+	{
+		ERROR_("%s: \"%s\" must be a non-empty string.", LogName.c_str(), Field);
+		return std::nullopt;
+	}
+
+	return Found->get<StrId>();
+}
+
+std::optional<std::vector<StrId>> JsonParser::ReadNames(const nlohmann::json& Json, const char* Field) const
+{
+	const auto Found = Json.find(Field);
+	if(Found == Json.end())
+	{
+		ERROR_("%s: \"%s\" is missing.", LogName.c_str(), Field);
+		return std::nullopt;
+	}
+
+	if(!Found->is_array())
+	{
+		ERROR_("%s: \"%s\" must be a list.", LogName.c_str(), Field);
+		return std::nullopt;
+	}
+
+	std::vector<StrId> Names;
+	for(const nlohmann::json& Entry : *Found)
+	{
+		if(!Entry.is_string() || Entry.get_ref<const Str&>().empty())
+		{
+			ERROR_("%s: \"%s\" must only hold non-empty strings.", LogName.c_str(), Field);
+			return std::nullopt;
+		}
+
+		const auto& Name = Entry.get_ref<const Str&>();
+		if(std::ranges::find(Names, Name) != Names.end())
+		{
+			ERROR_("%s: \"%s\" lists \"%s\" twice.", LogName.c_str(), Field, Name.c_str());
+			return std::nullopt;
+		}
+
+		Names.push_back(Name);
+	}
+
+	return Names;
+}

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+    <PropertyGroup>
+        <ObsVersion>33.0.0</ObsVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Sanitize)'=='true'">
+        <EnableASAN>true</EnableASAN>
+        <OutDir>$(MSBuildThisFileDirectory)x64\$(Configuration)-asan\</OutDir>
+        <IntDir>$(Platform)\$(Configuration)-asan\</IntDir>
+    </PropertyGroup>
+    <PropertyGroup>
+        <_BearIsThirdParty>$(MSBuildProjectDirectory.Contains('ThirdParty'))</_BearIsThirdParty>
+    </PropertyGroup>
+    <ItemDefinitionGroup Condition="'$(_BearIsThirdParty)'!='True'">
+        <ClCompile>
+            <AdditionalOptions>/w34062 %(AdditionalOptions)</AdditionalOptions>
+        </ClCompile>
+    </ItemDefinitionGroup>
+    <PropertyGroup Condition="'$(StaticAnalysis)'=='true' and '$(_BearIsThirdParty)'!='True'">
+        <RunCodeAnalysis>true</RunCodeAnalysis>
+        <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
+        <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+        <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+        <ClangTidyAdditionalOptions>/FI"$(MSBuildThisFileDirectory)ClangTidyShims.h" $(ClangTidyAdditionalOptions)</ClangTidyAdditionalOptions>
+    </PropertyGroup>
+    <ItemDefinitionGroup Condition="'$(StaticAnalysis)'=='true' and '$(_BearIsThirdParty)'!='True'">
+        <ClCompile>
+            <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+            <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+            <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
+        </ClCompile>
+    </ItemDefinitionGroup>
+</Project>
