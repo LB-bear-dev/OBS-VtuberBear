@@ -1,0 +1,89 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+env:
+  CONFIGURATION: Release
+  OBSPATH: ${{ github.workspace }}\obs-studio\build_x64
+
+jobs:
+  build:
+    runs-on: windows-2025
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout plugin
+        uses: actions/checkout@v4
+        with:
+          path: plugin
+          submodules: true
+
+      - name: Work out versions
+        id: version
+        run: |
+          $plugin = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME -replace '^v', '' } else { "0.0.0-dev.$($env:GITHUB_SHA.Substring(0, 7))" }
+          "plugin=$plugin" >> $env:GITHUB_OUTPUT
+          "obs=$((Select-Xml -Path plugin/Directory.Build.props -XPath '//ObsVersion').Node.InnerText)" >> $env:GITHUB_OUTPUT
+
+      - name: Cache OBS
+        id: obs-cache
+        uses: actions/cache@v4
+        with:
+          path: obs-studio
+          key: obs-${{ steps.version.outputs.obs }}-v3
+
+      - name: Build libobs
+        if: steps.obs-cache.outputs.cache-hit != 'true'
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          git clone --quiet --depth 1 --branch ${{ steps.version.outputs.obs }} --recurse-submodules --shallow-submodules https://github.com/obsproject/obs-studio.git obs-studio
+          Set-Location obs-studio
+          cmake --preset windows-x64 -DENABLE_FRONTEND=OFF -DENABLE_PLUGINS=OFF -DENABLE_SCRIPTING=OFF -DENABLE_BROWSER=OFF
+          cmake --build build_x64 --config RelWithDebInfo --target libobs
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build plugin
+        working-directory: plugin
+        run: msbuild OBS-VtuberBear.sln /restore /p:RestorePackagesConfig=true /m /p:Configuration=$env:CONFIGURATION /p:Platform=x64 /p:PluginVersion=${{ steps.version.outputs.plugin }}
+
+      - name: Package
+        run: |
+          $name = 'OBS-VtuberBear-${{ steps.version.outputs.plugin }}-windows-x64'
+          $out = "plugin/x64/$env:CONFIGURATION"
+          New-Item -ItemType Directory -Force package/plugins/OBS-VtuberBear, dist | Out-Null
+          Copy-Item "$out/OBS-VtuberBear.dll", "$out/DiscordBear.dll" package/plugins/OBS-VtuberBear
+          Copy-Item plugin/README.md, plugin/LICENSE, plugin/LICENSES package -Recurse
+          Compress-Archive package/* "dist/$name.zip"
+          Compress-Archive "$out/OBS-VtuberBear.pdb" "dist/$name-pdb.zip"
+
+      - name: Build installer
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup --no-progress -y }
+          & $iscc "/DAppVersion=${{ steps.version.outputs.plugin }}" "/DStageDir=$((Resolve-Path package).Path)" "/DOutputDir=$((Resolve-Path dist).Path)" plugin/installer/OBS-VtuberBear.iss
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OBS-VtuberBear-${{ steps.version.outputs.plugin }}-windows-x64
+          path: dist/
+
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}

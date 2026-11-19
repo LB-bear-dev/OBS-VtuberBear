@@ -1,0 +1,6 @@
+[submodule "ThirdParty/box2d"]
+	path = ThirdParty/box2d
+	url = https://github.com/erincatto/box2d.git
+[submodule "ThirdParty/googletest"]
+	path = ThirdParty/googletest
+	url = https://github.com/google/googletest.git
