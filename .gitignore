@@ -4,6 +4,7 @@
 *.sln.docstates
 *.DotSettings.user
 *.user.props
+.idea/*
 
 # Build results
 [Dd]ebug/
