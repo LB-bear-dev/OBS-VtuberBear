@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
     <PropertyGroup>
-        <ObsVersion>33.0.0</ObsVersion>
+        <ObsVersion>33.0.3</ObsVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Sanitize)'=='true'">
         <EnableASAN>true</EnableASAN>
