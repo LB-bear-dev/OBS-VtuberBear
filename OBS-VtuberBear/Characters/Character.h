@@ -6,8 +6,6 @@
 
 namespace CharacterControlOBS
 {
-using AttributeMap = std::unordered_map<StrId, std::unique_ptr<Attribute>>;
-
 void SetAttribute(const AttributeMap& Map, StrIdRef Name, const Attribute::Value& Value);
 
 class Component

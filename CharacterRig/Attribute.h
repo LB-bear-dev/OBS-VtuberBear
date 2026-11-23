@@ -1,6 +1,7 @@
 // Copyright (C) 2026 LB-bear-dev <lb_burr@outlook.com>
 #pragma once
-#include <cstdint>
+#include <memory>
+#include <unordered_map>
 #include <variant>
 #include "CharacterControlCore/CoreTypes.h"
 
@@ -12,7 +13,7 @@ class Attribute
 {
 public:
 	// Holds some value that takes up 8 bits
-	using Value = std::variant<bool, int64_t, double, Str>;
+	using Value = std::variant<bool, double, Str>;
 
 	explicit Attribute(Value Default);
 
@@ -38,4 +39,6 @@ public:
 private:
 	Value Current;
 };
+
+using AttributeMap = std::unordered_map<StrId, std::unique_ptr<Attribute>>;
 }

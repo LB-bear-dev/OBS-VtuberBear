@@ -32,7 +32,6 @@ const char* Attribute::GetTypeName(const Value& Val)
 	// @formatter:off
 	return std::visit(Overloaded{
 		[](bool) { return "bool"; },
-		[](int64_t) { return "int"; },
 		[](double) { return "float"; },
 		[](const Str&) { return "string"; },
 		[]<typename T>(const T&) { static_assert(ALWAYS_FALSE<T>); },
