@@ -54,10 +54,10 @@
             <WarningLevel>Level3</WarningLevel>
             <SDLCheck>true</SDLCheck>
             <ConformanceMode>true</ConformanceMode>
-            <LanguageStandard>stdcpp20</LanguageStandard>
+            <LanguageStandard>stdcpplatest</LanguageStandard>
             <PrecompiledHeader>NotUsing</PrecompiledHeader>
-            <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
-            <AdditionalIncludeDirectories>..\;..\ThirdParty\box2d\include;$(OBSPATH)\..\libobs;$(OBSPATH)\config;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <AdditionalOptions>/Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
+            <AdditionalIncludeDirectories>..\;..\ThirdParty\box2d\include;..\ThirdParty\glaze\include;$(OBSPATH)\..\libobs;$(OBSPATH)\config;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
         </ClCompile>
     </ItemDefinitionGroup>
     <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
