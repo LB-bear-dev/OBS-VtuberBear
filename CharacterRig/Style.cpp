@@ -1,7 +1,5 @@
 // Copyright (C) 2026 LB-bear-dev <lb_burr@outlook.com>
 #include "CharacterRig/Style.h"
-#include <fstream>
-#include <iterator>
 #include <nlohmann/json.hpp>
 #include <util/base.h>
 #include "CharacterControlCore/Messaging.h"
@@ -17,8 +15,6 @@ namespace
 	public:
 		StyleParser(Str InLogName, FilePath InFolder) : JsonParser(std::move(InLogName)), Folder(std::move(InFolder))
 		{}
-
-		using JsonParser::ParseObject;
 
 		std::optional<Style> Parse(const nlohmann::json& Json) const;
 
@@ -36,6 +32,18 @@ namespace
 
 	std::optional<Style> StyleParser::Parse(const nlohmann::json& Json) const
 	{
+		if (!Json.is_object())
+		{
+			ERROR_("%s must be a JSON object.", GetLogName().c_str());
+			return std::nullopt;
+		}
+
+		std::optional<StrId> Name = ReadName(Json, "name");
+		if (!Name)
+		{
+			return std::nullopt;
+		}
+
 		const auto FoundLayers = Json.find("layers");
 		if (FoundLayers == Json.end() || !FoundLayers->is_object())
 		{
@@ -44,6 +52,7 @@ namespace
 		}
 
 		Style Result;
+		Result.Name = std::move(*Name);
 		for (const auto& Item : FoundLayers->items())
 		{
 			std::optional<StyleLayer> Layer = ReadLayer(Item.value(), Item.key());
@@ -53,6 +62,18 @@ namespace
 			}
 
 			Result.Layers.emplace(Item.key(), std::move(*Layer));
+		}
+
+		if (const auto When = Json.find("when"); When != Json.end())
+		{
+			std::optional<Condition> Parsed = ParseCondition(*When);
+			if (!Parsed)
+			{
+				ERROR_("%s: \"when\" is not a valid condition.", GetLogName().c_str());
+				return std::nullopt;
+			}
+
+			Result.When = std::move(*Parsed);
 		}
 
 		return Result;
@@ -208,27 +229,8 @@ namespace
 	}
 }
 
-std::optional<Style> CharacterControlOBS::ParseStyle(const Str& Text, FilePathRef Path, FilePathRef Folder)
+std::optional<Style> CharacterControlOBS::ParseStyle(const nlohmann::json& Json, Str LogName, FilePathRef Folder)
 {
-	const StyleParser Parser(LogPath(Path), Folder);
-	const std::optional<nlohmann::json> Json = Parser.ParseObject(Text);
-	if (!Json)
-	{
-		return std::nullopt;
-	}
-
-	return Parser.Parse(*Json);
-}
-
-std::optional<Style> CharacterControlOBS::LoadStyle(FilePathRef Path, FilePathRef Folder)
-{
-	std::ifstream File(Path, std::ios::binary);
-	if (!File)
-	{
-		ERROR_("Cannot open %s.", LogPath(Path).c_str());
-		return std::nullopt;
-	}
-
-	const Str Text{std::istreambuf_iterator(File), std::istreambuf_iterator<char>()};
-	return ParseStyle(Text, Path, Folder);
+	const StyleParser Parser(std::move(LogName), Folder);
+	return Parser.Parse(Json);
 }

@@ -2,6 +2,9 @@
 #pragma once
 #include <map>
 #include <optional>
+#include <nlohmann/json.hpp>
+
+#include "Condition.h"
 #include "CharacterControlCore/CoreTypes.h"
 #include "box2d/math_functions.h"
 
@@ -46,12 +49,19 @@ namespace CharacterControlOBS
 	// styles swap out how the character looks, and they need to have images to respond to each slot that the character should look different for.
 	struct Style
 	{
+		// The name of this look, used in display info
+		StrId Name;
+		
 		std::map<StrId, StyleLayer> Layers;
+		
+		// Based on the available attributes for this character, should this style be activated?S
+		// Every style that matches its conditions will be activated
+		Condition When;
 
 		bool operator==(const Style&) const = default;
 	};
 
-	std::optional<Style> ParseStyle(const Str& Text, FilePathRef Path, FilePathRef Folder);
-
-	std::optional<Style> LoadStyle(FilePathRef Path, FilePathRef Folder);
+	// Parses one inline style object from a character file. LogName is used as the prefix for errors,
+	// and image paths are resolved inside Folder.
+	std::optional<Style> ParseStyle(const nlohmann::json& Json, Str LogName, FilePathRef Folder);
 }
