@@ -1,33 +1,59 @@
 // Copyright (C) 2026 LB-bear-dev <lb_burr@outlook.com>
 #pragma once
-#include <optional>
+#include <map>
+#include <memory>
 #include <vector>
-#include <nlohmann/json.hpp>
+#include <glaze/forward.hpp>
 #include "CharacterControlCore/CoreTypes.h"
 #include "CharacterRig/Rig.h"
 #include "CharacterRig/Style.h"
 
 namespace CharacterControlOBS
 {
-	// Root definition for a particular object that has visual states and different visual pieces
-	struct LoadedCharacter
+struct RigRef
+{
+	StrId Name;
+
+	std::shared_ptr<const Rig> Loaded;
+
+	bool operator==(const RigRef& Other) const
 	{
-		// Display name for the character. Whatever you want this character to show up as in UI screens and OBS windows
-		Str Name;
+		return Name == Other.Name;
+	}
+};
 
-		// Definition of what pieces this character is made up of, what different parts can be swapped to form reactions,
-		// What conditions cause parts to be swapped. This forms the "contract" of the character, all slots of each layer 
-		// is the list of images which should have a definition somewhere. The rig is external to a character because
-		// it can be reused among characters.
-		Rig RigDefinition;
-		
-		// Mapping of this specific character's images to the rig. Sparse and partial implementations are accepted, 
-		// in the way that multiple styles can be active at once, so a layer's slot will look through any active style
-		// to apply an image. If a layer ends up with a slot no active style fills, the layer will have no image.
-		std::vector<Style> StyleDefinitions;
-	};
+struct CharacterFile
+{
+	// The files that compose the available layers and slots, and the conditions that choose which slots are
+	// active based on attributes. Rigs are allowed to be composed out of multiple files, so you could make rigs
+	// for particular features and compose them together to get the final set of functionality
+	std::vector<RigRef> Rigs;
 
-	std::optional<LoadedCharacter> LoadCharacterFile(FilePathRef Folder);
+	// A list of alternative names for the character. Think like Twitch name, Discord ID etc, whatever another
+	// attribute provider might need to like attributes it wants to set to a particular character.
+	std::map<StrId, std::vector<StrId>> Aliases;
 
-	std::optional<FilePath> FindCharacterFolder(FilePathRef CharactersFolder, StrIdRef DiscordId);
+	// Mapping of this specific character's images to the rig. Sparse and partial implementations are accepted,
+	// in the way that multiple styles can be active at once, so a layer's slot will look through any active style
+	// to apply an image. If a layer ends up with a slot no active style fills, the layer will have no image.
+	std::vector<Style> Styles;
+
+	static CharacterFile Load(FilePathRef Root, StrIdRef Name);
+
+	static void LoadAll(FilePathRef Root);
+
+	bool Save(FilePathRef Folder) const;
+
+	bool operator==(const CharacterFile&) const = default;
+};
+
+std::shared_ptr<const CharacterFile> FindCharacterByName(StrIdRef Name);
+
+std::shared_ptr<const CharacterFile> FindCharacterByAlias(StrIdRef Service, StrIdRef Id);
 }
+
+template<>
+struct glz::meta<CharacterControlOBS::RigRef>
+{
+	static constexpr auto value = &CharacterControlOBS::RigRef::Name;
+};

@@ -1,192 +1,143 @@
 // Copyright (C) 2026 LB-bear-dev <lb_burr@outlook.com>
 #include "CharacterRig/CharacterFile.h"
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
+#include <glaze/glaze.hpp>
 #include <iterator>
-#include <string>
+#include <map>
+#include <memory>
+#include <optional>
+#include <ranges>
 #include <util/base.h>
 #include "CharacterControlCore/Messaging.h"
-#include "CharacterRig/JsonParser.h"
 #include "CharacterRig/PathRules.h"
 
 using namespace CharacterControlOBS;
 
 namespace
 {
-constexpr auto CHARACTER_FILE_NAME = "character.json";
-
-constexpr auto DEFAULT_FOLDER_NAME = "default";
-
-class CharacterParser : JsonParser
+std::shared_ptr<const Rig> GetRig(FilePathRef Path)
 {
-public:
-	CharacterParser(Str InLogName, FilePath InFolder) : JsonParser(std::move(InLogName)), Folder(std::move(InFolder)) {}
-
-	using JsonParser::ParseObject;
-
-	std::optional<LoadedCharacter> Parse(const nlohmann::json& Json) const;
-
-private:
-	std::optional<Str> ReadDisplayName(const nlohmann::json& Json) const;
-
-	std::optional<Rig> ReadRig(const nlohmann::json& Json) const;
-
-	std::optional<std::vector<Style>> ReadStyles(const nlohmann::json& Json) const;
-
-	FilePath Folder;
-};
-
-std::optional<LoadedCharacter> CharacterParser::Parse(const nlohmann::json& Json) const
-{
-	std::optional<Str> Name = ReadDisplayName(Json);
-	std::optional<std::vector<Style>> Styles = Name ? ReadStyles(Json) : std::nullopt;
-	std::optional<Rig> RigDefinition = Styles ? ReadRig(Json) : std::nullopt;
-	if(!RigDefinition)
+	static std::map<FilePath, std::shared_ptr<const Rig>> LoadedRigs;
+	auto [Found, Added] = LoadedRigs.try_emplace(Path.lexically_normal());
+	if(Added)
 	{
-		return std::nullopt;
+		Found->second = std::make_shared<const Rig>(Rig::Load(Path));
 	}
 
-	return LoadedCharacter{.Name = std::move(*Name), .RigDefinition = std::move(*RigDefinition), .StyleDefinitions = std::move(*Styles)};
+	return Found->second;
 }
 
-std::optional<Str> CharacterParser::ReadDisplayName(const nlohmann::json& Json) const
-{
-	const auto Name = Json.find("name");
-	if(Name == Json.end())
-	{
-		const std::u8string FolderName = Folder.filename().u8string();
-		return Str(FolderName.begin(), FolderName.end());
-	}
-
-	if(!Name->is_string())
-	{
-		ERROR_("%s: \"name\" must be a string.", GetLogName().c_str());
-		return std::nullopt;
-	}
-
-	return Name->get<Str>();
+std::map<StrId, std::shared_ptr<const CharacterFile>> LoadedCharacters;
 }
 
-std::optional<Rig> CharacterParser::ReadRig(const nlohmann::json& Json) const
+CharacterFile CharacterFile::Load(FilePathRef Root, StrIdRef Name)
 {
-	const auto Found = Json.find("rig");
-	if(Found == Json.end())
+	CharacterFile Loaded;
+
+	const std::optional<FilePath> Folder = CharacterFolder(Root, Name);
+	if(!Folder)
 	{
-		ERROR_("%s: \"rig\" is missing.", GetLogName().c_str());
-		return std::nullopt;
+		ERROR_("\"%s\" is not a valid character name.", Name.c_str());
+		return Loaded;
 	}
 
-	if(!Found->is_string())
-	{
-		ERROR_("%s: \"rig\" must be a string.", GetLogName().c_str());
-		return std::nullopt;
-	}
+	const FilePath Path = CharacterFilePath(*Folder);
 
-	const auto& Written = Found->get_ref<const Str&>();
-	const std::optional<FilePath> RigPath = ResolveInsideFolder(Folder, Written);
-	if(!RigPath)
-	{
-		ERROR_("%s: \"rig\" is outside the character folder: \"%s\".", GetLogName().c_str(), Written.c_str());
-		return std::nullopt;
-	}
-
-	// The path is only needed to find the rig, so it is loaded right away rather than stored.
-	return LoadRig(*RigPath);
-}
-
-std::optional<std::vector<Style>> CharacterParser::ReadStyles(const nlohmann::json& Json) const
-{
-	std::vector<Style> Styles;
-	const auto Found = Json.find("styles");
-	if(Found == Json.end())
-	{
-		return Styles;
-	}
-
-	// A list rather than an object so the order styles are layered in is the order they are written in.
-	if(!Found->is_array())
-	{
-		ERROR_("%s: \"styles\" must be a list.", GetLogName().c_str());
-		return std::nullopt;
-	}
-
-	int Number = 0;
-	for(const nlohmann::json& Entry : *Found)
-	{
-		++Number;
-		std::optional<Style> Parsed = ParseStyle(Entry, GetLogName() + ": style " + std::to_string(Number), Folder);
-		if(!Parsed)
-		{
-			return std::nullopt;
-		}
-
-		const auto SameName = [&Parsed](const Style& Other)
-		{
-			return Other.Name == Parsed->Name;
-		};
-
-		if(std::ranges::any_of(Styles, SameName))
-		{
-			ERROR_("%s: style %d: \"%s\" is already used by another style.", GetLogName().c_str(), Number, Parsed->Name.c_str());
-			return std::nullopt;
-		}
-
-		Styles.push_back(std::move(*Parsed));
-	}
-
-	return Styles;
-}
-}
-
-std::optional<LoadedCharacter> CharacterControlOBS::LoadCharacterFile(FilePathRef Folder)
-{
-	const FilePath Path = Folder / CHARACTER_FILE_NAME;
 	std::ifstream File(Path, std::ios::binary);
 	if(!File)
 	{
 		ERROR_("Cannot open %s.", LogPath(Path).c_str());
-		return std::nullopt;
+		return Loaded;
 	}
 
-	const Str Text{std::istreambuf_iterator(File), std::istreambuf_iterator<char>()};
-	const CharacterParser Parser(LogPath(Path), Folder);
-	const std::optional<nlohmann::json> Json = Parser.ParseObject(Text);
-	if(!Json)
+	const Utf8Str FileContents{std::istreambuf_iterator(File), std::istreambuf_iterator<char>()};
+	if(const auto Error = glz::read<glz::opts{.error_on_unknown_keys = false}>(Loaded, FileContents))
 	{
-		return std::nullopt;
+		ERROR_("%s has errors, character may be incomplete.\n%s", LogPath(Path).c_str(), format_error(Error, FileContents).c_str());
 	}
 
-	return Parser.Parse(*Json);
+	INFO_("Character file %s loaded", LogPath(Path).c_str());
+
+	for(auto& [RigName, Loaded] : Loaded.Rigs)
+	{
+		if(const std::optional<FilePath> RigPath = FindRig(Root, Name, RigName))
+		{
+			Loaded = GetRig(*RigPath);
+		}
+
+		WARN_("%s: rig \"%s\" was not found, skipping.", Name.c_str(), RigName.c_str());
+	}
+
+	return Loaded;
 }
 
-std::optional<FilePath> CharacterControlOBS::FindCharacterFolder(FilePathRef CharactersFolder, StrIdRef DiscordId)
+void CharacterFile::LoadAll(FilePathRef Root)
 {
-	const auto HasCharacterFile = [](FilePathRef Folder)
-	{
-		std::error_code Error;
-		return std::filesystem::is_regular_file(Folder / CHARACTER_FILE_NAME, Error);
-	};
+	LoadedCharacters.clear();
 
-	const auto IsDigit = [](char Letter)
+	std::error_code Error;
+	for(const auto& Entry : std::filesystem::directory_iterator(CharactersFolder(Root), Error))
 	{
-		return Letter >= '0' && Letter <= '9';
-	};
-
-	if(!DiscordId.empty() && std::ranges::all_of(DiscordId, IsDigit))
-	{
-		FilePath Own = CharactersFolder / DiscordId;
-		if(HasCharacterFile(Own))
+		const FilePath& Folder = Entry.path();
+		if(HasCharacterFile(Folder))
 		{
-			return Own;
+			const StrId Name = LogPath(Folder.filename());
+			LoadedCharacters[Name] = std::make_shared<const CharacterFile>(Load(Root, Name));
+		}
+	}
+}
+
+bool CharacterFile::Save(FilePathRef Folder) const
+{
+	const FilePath Path = CharacterFilePath(Folder);
+
+	Utf8Str FileContents;
+	if(const auto Error = glz::write<glz::opts{.minified = true}>(*this, FileContents))
+	{
+		ERROR_("Cannot write character %s.\n%s", LogPath(Path).c_str(), format_error(Error, FileContents).c_str());
+		return false;
+	}
+
+	std::ofstream File(Path, std::ios::binary);
+	if(!(File << FileContents))
+	{
+		ERROR_("Cannot save to disk %s.", LogPath(Path).c_str());
+		return false;
+	}
+
+	INFO_("Character file %s written successfully", LogPath(Path).c_str());
+
+	return true;
+}
+
+std::shared_ptr<const CharacterFile> CharacterControlOBS::FindCharacterByName(StrIdRef Name)
+{
+	const auto Found = LoadedCharacters.find(Name);
+	return Found != LoadedCharacters.end() ? Found->second : nullptr;
+}
+
+std::shared_ptr<const CharacterFile> CharacterControlOBS::FindCharacterByAlias(StrIdRef Service, StrIdRef Id)
+{
+	if(!Id.empty())
+	{
+		for(const std::shared_ptr<const CharacterFile>& Character : LoadedCharacters | std::views::values)
+		{
+			const auto Ids = Character->Aliases.find(Service);
+			if(Ids != Character->Aliases.end() && std::ranges::find(Ids->second, Id) != Ids->second.end())
+			{
+				return Character;
+			}
 		}
 	}
 
-	FilePath Default = CharactersFolder / DEFAULT_FOLDER_NAME;
-	if(HasCharacterFile(Default))
+	ERROR_("Character %s was not found, trying default", Id.c_str());
+	if(std::shared_ptr<const CharacterFile> Default = FindCharacterByName(DefaultCharacterName))
 	{
 		return Default;
 	}
 
-	WARN_("No character folder for \"%s\" and no default in %s.", DiscordId.c_str(), LogPath(CharactersFolder).c_str());
-	return std::nullopt;
+	ERROR_("Default character also not found");
+	return {};
 }
