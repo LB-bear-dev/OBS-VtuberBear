@@ -2,7 +2,6 @@
 #pragma once
 #include <map>
 #include <optional>
-#include <nlohmann/json.hpp>
 
 #include "Condition.h"
 #include "CharacterControlCore/CoreTypes.h"
@@ -10,58 +9,56 @@
 
 namespace CharacterControlOBS
 {
-	// Represents one discrete image. Could be a single file like a png, or a layer out of a PSD file.
-	struct StyleImage
-	{
-		// Path to the image
-		FilePath File;
+// Represents one discrete image. Could be a single file like a png, or a layer out of a PSD file.
+struct StyleImage
+{
+	// Path to the image
+	Str File;
 
-		// If this is a PSD, which layer to use
-		StrId Layer;
+	// If this is a PSD, which layer to use
+	StrId Layer;
 
-		bool operator==(const StyleImage&) const = default;
-	};
+	bool operator==(const StyleImage&) const = default;
+};
 
-	// Contains an image for any slots that would change the look of the layer
-	// For instance you might have a "body" layer which would respond to "speaking" and "not speaking"
-	// You could also have a "hat" layer which just has one image, for the hat. Swapping hats means swapping styles
-	// but every hat may never change due to slots changing. Pivots and offsets let you put a hat in the same spot on the character
-	// and sync it if that spot moves on the character as it animates
-	struct StyleLayer
-	{
-		// If this should render by default
-		bool Hidden = false;
+// Contains an image for any slots that would change the look of the layer
+// For instance you might have a "body" layer which would respond to "speaking" and "not speaking"
+// You could also have a "hat" layer which just has one image, for the hat. Swapping hats means swapping styles
+// but every hat may never change due to slots changing. Pivots and offsets let you put a hat in the same spot on the character
+// and sync it if that spot moves on the character as it animates
+struct StyleLayer
+{
+	// If this should render by default
+	bool Hidden = false;
 
-		// Where this layer is relative to the rest of the character, relative to the pivot
-		b2Vec2 Offset{};
+	// Where this layer is relative to the rest of the character, relative to the pivot
+	b2Vec2 Offset{};
 
-		// If it exists, where the placement point is relative to the image.
-		std::optional<b2Vec2> Pivot;
+	// If it exists, where the placement point is relative to the image.
+	std::optional<b2Vec2> Pivot;
 
-		// A mapping of all the images to each possible slot that could fill it. So this could be like "speaking" and "not speaking"
-		std::map<StrId, StyleImage> SlotImages;
+	Str File;
 
-		bool operator==(const StyleLayer&) const = default;
-	};
+	// A mapping of all the images to each possible slot that could fill it. So this could be like "speaking" and "not speaking"
+	std::map<StrId, StyleImage> SlotImages;
 
-	// A style is one "look" for a character, and it is made of a sparse set of layers. They override layers
-	// and map specific images to slots. Slots are basically events that happen while animations are playing,
-	// styles swap out how the character looks, and they need to have images to respond to each slot that the character should look different for.
-	struct Style
-	{
-		// The name of this look, used in display info
-		StrId Name;
-		
-		std::map<StrId, StyleLayer> Layers;
-		
-		// Based on the available attributes for this character, should this style be activated?S
-		// Every style that matches its conditions will be activated
-		Condition When;
+	bool operator==(const StyleLayer&) const = default;
+};
 
-		bool operator==(const Style&) const = default;
-	};
+// A style is one "look" for a character, and it is made of a sparse set of layers. They override layers
+// and map specific images to slots. Slots are basically events that happen while animations are playing,
+// styles swap out how the character looks, and they need to have images to respond to each slot that the character should look different for.
+struct Style
+{
+	// The name of this look, used in display info
+	StrId Name;
 
-	// Parses one inline style object from a character file. LogName is used as the prefix for errors,
-	// and image paths are resolved inside Folder.
-	std::optional<Style> ParseStyle(const nlohmann::json& Json, Str LogName, FilePathRef Folder);
+	std::map<StrId, StyleLayer> Layers;
+
+	// Based on the available attributes for this character, should this style be activated?S
+	// Every style that matches its conditions will be activated
+	Condition When;
+
+	bool operator==(const Style&) const = default;
+};
 }
