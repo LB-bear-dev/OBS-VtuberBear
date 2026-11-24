@@ -3,7 +3,8 @@
 #include <filesystem>
 #include <string>
 
-using Str = std::string;
+using Utf8Str = std::string;
+using Utf8StrRef = const Utf8Str&;
 using StrId = std::string;
 using StrIdRef = const StrId&;
 using FilePath = std::filesystem::path;
