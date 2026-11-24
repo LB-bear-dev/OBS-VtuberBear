@@ -37,6 +37,22 @@ std::optional<FilePath> CharacterControlOBS::CharacterFolder(FilePathRef Root, S
 	return ResolveInsideFolder(CharactersFolder(Root), Name);
 }
 
+FilePath CharacterControlOBS::DefaultCharacterFolder(FilePathRef Root)
+{
+	return CharactersFolder(Root) / DefaultCharacterName;
+}
+
+FilePath CharacterControlOBS::CharacterFilePath(FilePathRef Folder)
+{
+	return Folder / "character.json";
+}
+
+bool CharacterControlOBS::HasCharacterFile(FilePathRef Folder)
+{
+	std::error_code Error;
+	return is_regular_file(CharacterFilePath(Folder), Error);
+}
+
 std::optional<FilePath> CharacterControlOBS::FindRig(FilePathRef Root, StrIdRef CharacterName, StrIdRef RigName)
 {
 	const Utf8Str FileName = RigName + ".Json";
