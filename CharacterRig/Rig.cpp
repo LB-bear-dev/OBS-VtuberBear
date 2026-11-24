@@ -22,7 +22,7 @@ Rig Rig::Load(FilePathRef Path)
 
 	INFO_("Rig file %s loaded successfully", LogPath(Path).c_str());
 
-	const Str FileContents{std::istreambuf_iterator(File), std::istreambuf_iterator<char>()};
+	const Utf8Str FileContents{std::istreambuf_iterator(File), std::istreambuf_iterator<char>()};
 
 	// Do our best to load the file and get a usable rig out of it. Any partial readable file should give us
 	// something to display which is better than nothing.
@@ -38,7 +38,7 @@ Rig Rig::Load(FilePathRef Path)
 
 bool Rig::Save(FilePathRef Path) const
 {
-	Str FileContents;
+	Utf8Str FileContents;
 	if(const auto ErrorString = glz::write<glz::opts{.minified = true}>(*this, FileContents))
 	{
 		ERROR_("Cannot write rig %s.\n%s", LogPath(Path).c_str(), format_error(ErrorString, FileContents).c_str());

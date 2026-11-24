@@ -69,7 +69,7 @@ struct ScriptedCharacterSource : CharacterSourceData
 
 	struct Settings : CharacterSettings
 	{
-		Str RigFile;
+		Utf8Str RigFile;
 
 		void Load(obs_data_t* Data)
 		{

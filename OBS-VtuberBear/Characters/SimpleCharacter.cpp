@@ -14,8 +14,8 @@ struct SimpleCharacterSource : CharacterSourceData
 
 	struct Settings : CharacterSettings
 	{
-		Str NotSpeakingImg;
-		Str SpeakingImg;
+		Utf8Str NotSpeakingImg;
+		Utf8Str SpeakingImg;
 
 		void Load(obs_data_t* Data)
 		{

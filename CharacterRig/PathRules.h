@@ -5,8 +5,16 @@
 
 namespace CharacterControlOBS
 {
-	// gets a filename from a path that is relative to a folder
-	std::optional<FilePath> ResolveInsideFolder(FilePathRef Folder, const Str& Utf8Path);
+// gets a filename from a path that is relative to a folder
+std::optional<FilePath> ResolveInsideFolder(FilePathRef Folder, Utf8StrRef Path);
 
-	Str LogPath(FilePathRef Path);
+Utf8Str LogPath(FilePathRef Path);
+
+FilePath RigsFolder(FilePathRef Root);
+
+FilePath CharactersFolder(FilePathRef Root);
+
+std::optional<FilePath> CharacterFolder(FilePathRef Root, StrIdRef Name);
+
+std::optional<FilePath> FindRig(FilePathRef Root, StrIdRef CharacterName, StrIdRef RigName);
 }
