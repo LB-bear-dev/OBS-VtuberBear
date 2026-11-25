@@ -3,7 +3,6 @@
     <Import Project="BearApps.user.props" Condition="Exists('BearApps.user.props')"/>
     <Target Name="Setup">
         <Exec Command="git submodule update --init" WorkingDirectory="$(MSBuildThisFileDirectory)" IgnoreStandardErrorWarningFormat="true"/>
-        <MSBuild Projects="$(MSBuildThisFileDirectory)OBS-VtuberBear.sln" Targets="Restore" Properties="RestorePackagesConfig=true;Platform=x64"/>
         <Error Condition="'$(OBSPATH)'=='' or !Exists('$(OBSPATH)\libobs')" Text="OBS build not found at OBSPATH='$(OBSPATH)'. Set OBSPATH in BearApps.user.props to your OBS Studio $(ObsVersion) build_x64 folder (see README)."/>
         <Message Importance="high" Text="OBS: using $(OBSPATH)"/>
         <Message Importance="high" Text="Done. Open OBS-VtuberBear.sln, or build with: msbuild OBS-VtuberBear.sln /p:Configuration=Release /p:Platform=x64"/>

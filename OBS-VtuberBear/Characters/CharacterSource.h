@@ -6,7 +6,6 @@
 #include <mutex>
 #include <obs-module.h>
 #include "Characters/ActiveCharacters.h"
-#include "Discord/DiscordComponent.h"
 #include "box2d/math_functions.h"
 
 namespace CharacterControlOBS
@@ -72,8 +71,6 @@ private:
 
 		if(const std::shared_ptr<Character> ActiveCharacter = ActiveCharacters::Get().GetActiveCharacter(Settings.Name))
 		{
-			ActiveCharacter->AddComponent(std::make_unique<DiscordComponent>(Settings.Id));
-
 			if(CharacterControlRender::ImageLayer* DefaultLayer = ActiveCharacter->GetImageRoot().GetLayerByName("default"))
 			{
 				Settings.SetupImages(*DefaultLayer);

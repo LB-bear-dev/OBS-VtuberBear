@@ -2,9 +2,6 @@
 #include "PCH.h"
 #include <obs-module.h>
 #include "plugin-macros.h"
-#include "Characters/CharacterSourceInfos.h"
-#include "Discord/DiscordComponent.h"
-#include "Discord/DiscordDock.h"
 
 OBS_DECLARE_MODULE()
 
@@ -15,16 +12,11 @@ bool obs_module_load()
 {
 	blog(LOG_INFO, "plugin loaded successfully (version %s)", PLUGIN_VERSION);
 
-	obs_register_source(&SimpleDiscordCharacterSourceInfo);
-	obs_register_source(&ScriptedDiscordCharacterSourceInfo);
-	CharacterControlOBS::AddDiscordDock();
-
 	return true;
 }
 
 // ReSharper disable once CppInconsistentNaming
 void obs_module_unload()
 {
-	CharacterControlOBS::ShutdownDiscord();
 	blog(LOG_INFO, "plugin unloaded");
 }

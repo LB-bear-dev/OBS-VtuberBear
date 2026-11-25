@@ -4,9 +4,6 @@
     <Filter Include="Characters">
       <UniqueIdentifier>{39c5ee08-00ba-5355-afb9-9291908923eb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Discord">
-      <UniqueIdentifier>{0422fa3c-4f59-5b7f-8abc-a40d3fab1010}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Render">
       <UniqueIdentifier>{ac2534e3-2d81-5e5f-91c1-074843e115ee}</UniqueIdentifier>
     </Filter>
@@ -22,24 +19,6 @@
     </ClCompile>
     <ClCompile Include="Characters\Character.cpp">
       <Filter>Characters</Filter>
-    </ClCompile>
-    <ClCompile Include="Characters\ScriptedCharacter.cpp">
-      <Filter>Characters</Filter>
-    </ClCompile>
-    <ClCompile Include="Characters\SimpleCharacter.cpp">
-      <Filter>Characters</Filter>
-    </ClCompile>
-    <ClCompile Include="Discord\DiscordComponent.cpp">
-      <Filter>Discord</Filter>
-    </ClCompile>
-    <ClCompile Include="Discord\DiscordDock.cpp">
-      <Filter>Discord</Filter>
-    </ClCompile>
-    <ClCompile Include="Discord\DiscordVoice.cpp">
-      <Filter>Discord</Filter>
-    </ClCompile>
-    <ClCompile Include="Discord\VoiceRoster.cpp">
-      <Filter>Discord</Filter>
     </ClCompile>
     <ClCompile Include="Render\ImageLayer.cpp">
       <Filter>Render</Filter>
@@ -57,24 +36,10 @@
     <ClInclude Include="Characters\Character.h">
       <Filter>Characters</Filter>
     </ClInclude>
-    <ClInclude Include="Characters\CharacterSourceInfos.h">
-      <Filter>Characters</Filter>
-    </ClInclude>
     <ClInclude Include="Characters\CharacterSource.h">
       <Filter>Characters</Filter>
     </ClInclude>
-    <ClInclude Include="Discord\DiscordComponent.h">
-      <Filter>Discord</Filter>
-    </ClInclude>
-    <ClInclude Include="Discord\DiscordDock.h">
-      <Filter>Discord</Filter>
-    </ClInclude>
-    <ClInclude Include="Discord\DiscordVoice.h">
-      <Filter>Discord</Filter>
-    </ClInclude>
-    <ClInclude Include="Discord\VoiceRoster.h">
-      <Filter>Discord</Filter>
-    </ClInclude>    <ClInclude Include="Render\ImageLayer.h">
+    <ClInclude Include="Render\ImageLayer.h">
       <Filter>Render</Filter>
     </ClInclude>
     <ClInclude Include="Render\WatchedImage.h">
@@ -92,8 +57,5 @@
     <ClInclude Include="..\CharacterControlCore\WatchedFile.h">
       <Filter>CharacterControlCore</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config"/>
   </ItemGroup>
 </Project>

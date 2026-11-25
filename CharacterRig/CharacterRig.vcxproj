@@ -47,7 +47,6 @@
     </PropertyGroup>
     <Target Name="BearCheckObs" BeforeTargets="PrepareForBuild">
         <Error Condition="'$(OBSPATH)'=='' or !Exists('$(OBSPATH)\..\libobs\obs.h')" Text="OBS not found at OBSPATH='$(OBSPATH)'. Set OBSPATH in BearApps.user.props to your OBS Studio $(ObsVersion) build_x64 folder (see README)."/>
-        <Error Condition="!Exists('$(MSBuildThisFileDirectory)..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')" Text="nlohmann.json not found in packages. Run msbuild Setup.proj (it restores NuGet packages)."/>
     </Target>
     <ItemDefinitionGroup>
         <ClCompile>
@@ -92,9 +91,6 @@
         <ClInclude Include="..\CharacterControlCore\Messaging.h"/>
         <ClInclude Include="..\CharacterControlCore\Overloaded.h"/>    </ItemGroup>
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
-    <ImportGroup Label="ExtensionTargets">
-        <Import Project="..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets" Condition="Exists('..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')"/>
-    </ImportGroup>
     <Target Name="CharacterRig" DependsOnTargets="Build"/>
     <Target Name="OBS-VtuberBear" DependsOnTargets="Build"/>
     <Target Name="CharacterControlTests" DependsOnTargets="Build"/>

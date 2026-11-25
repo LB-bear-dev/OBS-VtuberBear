@@ -36,7 +36,6 @@ Create `BearApps.user.props` in the repo root (it is not checked in) with the pa
 
 Run `msbuild Setup.proj` from the repo root (a Developer PowerShell for VS has msbuild on its PATH). It:
 - Grabs git submodules (Box2D, googletest)
-- Runs NuGet
 - Checks that `OBSPATH` points at an OBS build
 
 Open `OBS-VtuberBear.sln` in your IDE of choice, build and run.

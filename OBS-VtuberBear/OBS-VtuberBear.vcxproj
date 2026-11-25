@@ -115,12 +115,8 @@
         <ClInclude Include="plugin-macros.h"/>
         <ClInclude Include="Characters\ActiveCharacters.h"/>
         <ClInclude Include="Characters\Character.h"/>
-        <ClInclude Include="Characters\CharacterSourceInfos.h"/>
         <ClInclude Include="Characters\CharacterSource.h"/>
-        <ClInclude Include="Discord\DiscordComponent.h"/>
-        <ClInclude Include="Discord\DiscordDock.h"/>
-        <ClInclude Include="Discord\DiscordVoice.h"/>
-        <ClInclude Include="Discord\VoiceRoster.h"/>        <ClInclude Include="Render\ImageLayer.h"/>
+        <ClInclude Include="Render\ImageLayer.h"/>
         <ClInclude Include="Render\WatchedImage.h"/>
         <ClInclude Include="..\CharacterControlCore\CoreTypes.h"/>
         <ClInclude Include="..\CharacterControlCore\Messaging.h"/>
@@ -135,17 +131,8 @@
         <ClCompile Include="plugin-main.cpp"/>
         <ClCompile Include="Characters\ActiveCharacters.cpp"/>
         <ClCompile Include="Characters\Character.cpp"/>
-        <ClCompile Include="Characters\ScriptedCharacter.cpp"/>
-        <ClCompile Include="Characters\SimpleCharacter.cpp"/>
-        <ClCompile Include="Discord\DiscordComponent.cpp"/>
-        <ClCompile Include="Discord\DiscordDock.cpp"/>
-        <ClCompile Include="Discord\DiscordVoice.cpp"/>
-        <ClCompile Include="Discord\VoiceRoster.cpp"/>
         <ClCompile Include="Render\ImageLayer.cpp"/>
         <ClCompile Include="Render\WatchedImage.cpp"/>
-    </ItemGroup>
-    <ItemGroup>
-        <None Include="packages.config"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\CharacterRig\CharacterRig.vcxproj">
@@ -153,15 +140,6 @@
         </ProjectReference>
     </ItemGroup>
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
-    <ImportGroup Label="ExtensionTargets">
-        <Import Project="..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets" Condition="Exists('..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')"/>
-    </ImportGroup>
-    <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-        <PropertyGroup>
-            <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them. For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-        </PropertyGroup>
-        <Error Condition="!Exists('..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets'))"/>
-    </Target>
     <Target Name="DiscordBearTests" DependsOnTargets="Build"/>
     <Target Name="BearCopyDiscordBear" BeforeTargets="PostBuildEvent">
         <Copy SourceFiles="$(DiscordBearDir)$(Configuration)\DiscordBear.dll" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true"/>
