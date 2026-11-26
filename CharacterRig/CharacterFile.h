@@ -12,9 +12,11 @@ namespace CharacterControlOBS
 {
 struct RigRef
 {
-	StrId Name;
+	Str Name;
 
-	std::shared_ptr<const Rig> Loaded;
+	std::shared_ptr<const Rig> LoadedRig;
+
+	bool Load(FilePathRef Root, StrRef CharacterName);
 
 	bool operator==(const RigRef& Other) const
 	{
@@ -38,7 +40,7 @@ struct CharacterFile
 	// to apply an image. If a layer ends up with a slot no active style fills, the layer will have no image.
 	std::vector<Style> Styles;
 
-	static CharacterFile Load(FilePathRef Root, StrIdRef Name);
+	static CharacterFile Load(FilePathRef Root, StrRef Name);
 
 	static void LoadAll(FilePathRef Root);
 
@@ -47,7 +49,7 @@ struct CharacterFile
 	bool operator==(const CharacterFile&) const = default;
 };
 
-std::shared_ptr<const CharacterFile> FindCharacterByName(StrIdRef Name);
+std::shared_ptr<const CharacterFile> FindCharacterByName(StrRef Name);
 
 std::shared_ptr<const CharacterFile> FindCharacterByAlias(StrIdRef Service, StrIdRef Id);
 }

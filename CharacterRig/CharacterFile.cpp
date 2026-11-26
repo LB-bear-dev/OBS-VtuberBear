@@ -17,30 +17,40 @@ using namespace CharacterControlOBS;
 
 namespace
 {
-std::shared_ptr<const Rig> GetRig(FilePathRef Path)
+std::map<FilePath, std::shared_ptr<const Rig>> LoadedRigs;
+std::map<Str, std::shared_ptr<const CharacterFile>> LoadedCharacters;
+}
+
+bool RigRef::Load(FilePathRef Root, StrRef CharacterName)
 {
-	static std::map<FilePath, std::shared_ptr<const Rig>> LoadedRigs;
-	auto [Found, Added] = LoadedRigs.try_emplace(Path.lexically_normal());
-	if(Added)
+	if(const std::optional<FilePath> FoundRigPath = FindRigPath(Root, CharacterName, Name); FoundRigPath.has_value())
 	{
-		Found->second = std::make_shared<const Rig>(Rig::Load(Path));
+		auto [FoundRig, Added] = LoadedRigs.try_emplace(*FoundRigPath);
+
+		if(Added)
+		{
+			FoundRig->second = std::make_shared<const Rig>(Rig::Load(*FoundRigPath));
+		}
+
+		LoadedRig = FoundRig->second;
+
+		INFO_("Loaded Rig \"%s\" from path \"%s\"", Name.c_str(), FoundRigPath->c_str());
+		return true;
 	}
 
-	return Found->second;
+	WARN_("Could not load Rig \"%s\" from any source", Name.c_str());
+	return false;
 }
 
-std::map<StrId, std::shared_ptr<const CharacterFile>> LoadedCharacters;
-}
-
-CharacterFile CharacterFile::Load(FilePathRef Root, StrIdRef Name)
+CharacterFile CharacterFile::Load(FilePathRef Root, StrRef Name)
 {
-	CharacterFile Loaded;
+	CharacterFile Character;
 
 	const std::optional<FilePath> Folder = CharacterFolder(Root, Name);
 	if(!Folder)
 	{
 		ERROR_("\"%s\" is not a valid character name.", Name.c_str());
-		return Loaded;
+		return Character;
 	}
 
 	const FilePath Path = CharacterFilePath(*Folder);
@@ -49,28 +59,23 @@ CharacterFile CharacterFile::Load(FilePathRef Root, StrIdRef Name)
 	if(!File)
 	{
 		ERROR_("Cannot open %s.", LogPath(Path).c_str());
-		return Loaded;
+		return Character;
 	}
 
-	const Utf8Str FileContents{std::istreambuf_iterator(File), std::istreambuf_iterator<char>()};
-	if(const auto Error = glz::read<glz::opts{.error_on_unknown_keys = false}>(Loaded, FileContents))
+	const Str FileContents{std::istreambuf_iterator(File), std::istreambuf_iterator<char>()};
+	if(const auto Error = glz::read<glz::opts{.error_on_unknown_keys = false}>(Character, FileContents))
 	{
 		ERROR_("%s has errors, character may be incomplete.\n%s", LogPath(Path).c_str(), format_error(Error, FileContents).c_str());
 	}
 
 	INFO_("Character file %s loaded", LogPath(Path).c_str());
 
-	for(auto& [RigName, Loaded] : Loaded.Rigs)
+	for(auto& RigRef : Character.Rigs)
 	{
-		if(const std::optional<FilePath> RigPath = FindRig(Root, Name, RigName))
-		{
-			Loaded = GetRig(*RigPath);
-		}
-
-		WARN_("%s: rig \"%s\" was not found, skipping.", Name.c_str(), RigName.c_str());
+		RigRef.Load(Root, Name);
 	}
 
-	return Loaded;
+	return Character;
 }
 
 void CharacterFile::LoadAll(FilePathRef Root)
@@ -83,7 +88,7 @@ void CharacterFile::LoadAll(FilePathRef Root)
 		const FilePath& Folder = Entry.path();
 		if(HasCharacterFile(Folder))
 		{
-			const StrId Name = LogPath(Folder.filename());
+			StrRef Name = LogPath(Folder.filename());
 			LoadedCharacters[Name] = std::make_shared<const CharacterFile>(Load(Root, Name));
 		}
 	}
@@ -93,7 +98,7 @@ bool CharacterFile::Save(FilePathRef Folder) const
 {
 	const FilePath Path = CharacterFilePath(Folder);
 
-	Utf8Str FileContents;
+	std::string FileContents;
 	if(const auto Error = glz::write<glz::opts{.minified = true}>(*this, FileContents))
 	{
 		ERROR_("Cannot write character %s.\n%s", LogPath(Path).c_str(), format_error(Error, FileContents).c_str());
@@ -112,7 +117,7 @@ bool CharacterFile::Save(FilePathRef Folder) const
 	return true;
 }
 
-std::shared_ptr<const CharacterFile> CharacterControlOBS::FindCharacterByName(StrIdRef Name)
+std::shared_ptr<const CharacterFile> CharacterControlOBS::FindCharacterByName(StrRef Name)
 {
 	const auto Found = LoadedCharacters.find(Name);
 	return Found != LoadedCharacters.end() ? Found->second : nullptr;

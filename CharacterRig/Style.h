@@ -13,7 +13,7 @@ namespace CharacterControlOBS
 struct StyleImage
 {
 	// Path to the image
-	Utf8Str File;
+	Str File;
 
 	// If this is a PSD, which layer to use
 	StrId Layer;
@@ -37,7 +37,7 @@ struct StyleLayer
 	// If it exists, where the placement point is relative to the image.
 	std::optional<b2Vec2> Pivot;
 
-	Utf8Str File;
+	Str File;
 
 	// A mapping of all the images to each possible slot that could fill it. So this could be like "speaking" and "not speaking"
 	std::map<StrId, StyleImage> SlotImages;

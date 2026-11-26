@@ -16,7 +16,6 @@
 #endif
 #include <Windows.h>
 
-#include "Psd/Psd.h"
 #include "Psd/PsdChannel.h"
 #include "Psd/PsdChannelType.h"
 #include "Psd/PsdColorMode.h"
@@ -31,7 +30,6 @@
 #include "Psd/PsdNativeFile.h"
 #include "Psd/PsdParseDocument.h"
 #include "Psd/PsdParseLayerMaskSection.h"
-#include "Psd/PsdPlatform.h"
 #include "Psd/PsdSyncFileReader.h"
 #include "Psd/PsdSyncFileUtil.h"
 #include "Psd/PsdVectorMask.h"
@@ -52,17 +50,19 @@ void UnloadImage(gs_image_file_ex* Image)
 	}
 }
 
-bool LoadImage(const char* FileName, gs_image_file_ex* Image)
+bool LoadImage(FilePathRef FileName, gs_image_file_ex* Image)
 {
 	UnloadImage(Image);
 
-	if(FileName == nullptr || strlen(FileName) == 0)
+	if(FileName.empty())
 	{
 		return false;
 	}
 
-	DEBUG_("loading texture '%s'", FileName);
-	gs_image_file_ex_init(Image, FileName, GS_IMAGE_ALPHA_PREMULTIPLY);
+	const std::string LogName = reinterpret_cast<const char*>(FileName.u8string().c_str());
+
+	DEBUG_("loading texture '%s'", LogName.c_str());
+	gs_image_file_ex_init(Image, LogName.c_str(), GS_IMAGE_ALPHA_PREMULTIPLY);
 
 	obs_enter_graphics();
 	gs_image_file_ex_init_texture(Image);
@@ -70,40 +70,41 @@ bool LoadImage(const char* FileName, gs_image_file_ex* Image)
 
 	if(!Image->loaded)
 	{
-		WARN_("failed to load texture '%s'", FileName);
+		WARN_("failed to load texture '%s'", LogName.c_str());
 		return false;
 	}
 
 	return true;
 }
 
-std::string GetLayerName(const psd::Layer& Layer)
+StrId GetLayerName(const psd::Layer& Layer)
 {
-	std::string LayerName;
+	StrId LayerName;
 	if(Layer.utf16Name)
 	{
 		const auto* const WideName = reinterpret_cast<const wchar_t*>(Layer.utf16Name);
 		if(const int Size = WideCharToMultiByte(CP_UTF8, 0, WideName, -1, nullptr, 0, nullptr, nullptr); Size > 1)
 		{
 			LayerName.resize(Size - 1);
-			WideCharToMultiByte(CP_UTF8, 0, WideName, -1, LayerName.data(), Size, nullptr, nullptr);
+			WideCharToMultiByte(CP_UTF8, 0, WideName, -1, reinterpret_cast<char*>(LayerName.data()), Size, nullptr, nullptr);
 		}
 	} else
 	{
-		LayerName = Layer.name.c_str();
+		const std::string_view LayerNameRaw = Layer.name.c_str();
+		LayerName.assign(LayerNameRaw.begin(), LayerNameRaw.end());
 	}
 
 	return LayerName;
 }
 
-std::string GetLayerPath(const psd::Layer& Layer)
+StrId GetLayerPath(const psd::Layer& Layer)
 {
 	if(Layer.parent == nullptr)
 	{
 		return GetLayerName(Layer);
 	}
 
-	return GetLayerPath(*Layer.parent) + "/" + GetLayerName(Layer);
+	return GetLayerPath(*Layer.parent) + u8"/" + GetLayerName(Layer);
 }
 
 // Combine the opacity of all groups the layer is part of to get the final opacity, so like if a parent is at 50% opacity and this layer is at
@@ -198,30 +199,32 @@ struct PsdDeleter
 template<typename T>
 using PsdPtr = std::unique_ptr<T, PsdDeleter>;
 
-PsdPtr<psd::Document> ParseSupportedDocument(const char* FileName, psd::NativeFile& File, psd::Allocator& Allocator)
+PsdPtr<psd::Document> ParseSupportedDocument(FilePathRef FileName, psd::NativeFile& File, psd::Allocator& Allocator)
 {
+	const std::string LogName = reinterpret_cast<const char*>(FileName.u8string().c_str());
+
 	PsdPtr<psd::Document> Document(CreateDocument(&File, &Allocator), PsdDeleter{&Allocator});
 	if(!Document)
 	{
-		ERROR_("Cannot create document for %s.", FileName);
+		ERROR_("Cannot create document for %s.", LogName.c_str());
 		return nullptr;
 	}
 
 	if(Document->bitsPerChannel != 8 || Document->colorMode != psd::colorMode::RGB)
 	{
-		ERROR_("%s is not an 8-bit RGB PSD.", FileName);
+		ERROR_("%s is not an 8-bit RGB PSD.", LogName.c_str());
 		return nullptr;
 	}
 
 	if(Document->width == 0 || Document->height == 0 || Document->width > MAX_PSD_SIDE || Document->height > MAX_PSD_SIDE)
 	{
-		ERROR_("%s is %ux%u, max is %ux%u.", FileName, Document->width, Document->height, MAX_PSD_SIDE, MAX_PSD_SIDE);
+		ERROR_("%s is %ux%u, max is %ux%u.", LogName.c_str(), Document->width, Document->height, MAX_PSD_SIDE, MAX_PSD_SIDE);
 		return nullptr;
 	}
 
 	if(!LayerSectionFitsFile(*Document, File, File.GetSize()))
 	{
-		ERROR_("%s ends before its layers.", FileName);
+		ERROR_("%s ends before its layers.", LogName.c_str());
 		return nullptr;
 	}
 
@@ -338,27 +341,21 @@ std::optional<b2Vec2> TrimTransparentBorders(gs_image_file_ex& Image)
 	return b2Vec2{.x = static_cast<float>(MinX), .y = static_cast<float>(MinY)};
 }
 
-bool LoadPsd(const char* FileName, CharacterControlRender::FileImageLibrary& ImageLibrary, b2Vec2& CanvasSize)
+bool LoadPsd(FilePathRef FileName, CharacterControlRender::FileImageLibrary& ImageLibrary, b2Vec2& CanvasSize)
 {
-	std::array<wchar_t, MAX_PATH> WideFilename = {};
-	size_t Unused;
-	if(mbstowcs_s(&Unused, WideFilename.data(), WideFilename.size(), FileName, MAX_PATH) != 0)
-	{
-		ERROR_("Cannot convert file name %s.", FileName);
-		return false;
-	}
+	const std::string LogName = reinterpret_cast<const char*>(FileName.u8string().c_str());
 
 	psd::MallocAllocator Allocator;
 	psd::NativeFile File(&Allocator);
 
 	// try opening the file. if it fails, bail out.
-	if(!File.OpenRead(WideFilename.data()))
+	if(!File.OpenRead(FileName.c_str()))
 	{
-		ERROR_("Cannot open file %s.\n", FileName);
+		ERROR_("Cannot open file %s.\n", LogName.c_str());
 		return false;
 	}
 
-	const PsdPtr<psd::NativeFile> CloseFile(&File, PsdDeleter{&Allocator});
+	const PsdPtr<psd::NativeFile> PsdOpenHandle(&File, PsdDeleter{&Allocator});
 
 	const PsdPtr<psd::Document> Document = ParseSupportedDocument(FileName, File, Allocator);
 	if(!Document)
@@ -369,7 +366,7 @@ bool LoadPsd(const char* FileName, CharacterControlRender::FileImageLibrary& Ima
 	const PsdPtr<psd::LayerMaskSection> LayerMaskSection(ParseLayerMaskSection(Document.get(), &File, &Allocator), PsdDeleter{&Allocator});
 	if(!LayerMaskSection)
 	{
-		ERROR_("Cannot read the layers of %s.", FileName);
+		ERROR_("Cannot read the layers of %s.", LogName.c_str());
 		return false;
 	}
 
@@ -398,7 +395,7 @@ bool LoadPsd(const char* FileName, CharacterControlRender::FileImageLibrary& Ima
 
 		if(HasUndecodedChannel(Layer))
 		{
-			WARN_("Cannot decode %s layer %u.", FileName, LayerIndex);
+			WARN_("Cannot decode %s layer %u.", LogName.c_str(), LayerIndex);
 			continue;
 		}
 
@@ -420,12 +417,12 @@ bool LoadPsd(const char* FileName, CharacterControlRender::FileImageLibrary& Ima
 		gs_image_file_ex_init_texture(Image.get());
 		obs_leave_graphics();
 
-		const std::string LayerPath = GetLayerPath(Layer);
+		const StrId LayerPath = GetLayerPath(Layer);
 
 		// only add new layers. try_emplace leaves Image alone when the name is taken.
 		if(!ImageLibrary.try_emplace(LayerPath, std::move(Image), static_cast<int>(LayerIndex), Offset).second)
 		{
-			WARN_("%s has duplicate layer '%s'.", FileName, LayerPath.c_str());
+			WARN_("%s has duplicate layer '%s'.", LogName.c_str(), reinterpret_cast<const char*>(LayerPath.c_str()));
 			UnloadImage(Image.get());
 		}
 	}
@@ -434,7 +431,7 @@ bool LoadPsd(const char* FileName, CharacterControlRender::FileImageLibrary& Ima
 }
 }
 
-const std::vector<std::string>& CharacterControlRender::WatchedFileImageLibrary::GetImageNames() const
+const std::vector<StrId>& CharacterControlRender::WatchedFileImageLibrary::GetImageNames() const
 {
 	return ImageNames;
 }
@@ -449,12 +446,12 @@ bool CharacterControlRender::WatchedFileImageLibrary::UpdateInternal()
 	bool Success;
 	if(GetPath().extension() == ".psd")
 	{
-		Success = LoadPsd(GetPath().string().c_str(), *GetMutable(), MaxResolution);
+		Success = LoadPsd(GetPath(), *GetMutable(), MaxResolution);
 	} else
 	{
-		const std::string& Name = !OverrideName.empty() ? OverrideName : GetPath().stem().string();
+		const StrId Name = !OverrideName.empty() ? OverrideName : GetPath().stem().u8string();
 		const FileLayer& AddedLayer = GetMutable()->emplace(Name, FileLayer{.Image = std::make_unique<gs_image_file_ex>(), .ZOrder = 0, .Offset = {.x = 0, .y = 0}}).first->second;
-		Success = LoadImage(GetPath().string().c_str(), AddedLayer.Image.get());
+		Success = LoadImage(GetPath(), AddedLayer.Image.get());
 	}
 
 	// update valid image names
@@ -488,7 +485,7 @@ void CharacterControlRender::WatchedFileImageLibrary::DisposeInternal()
 
 void CharacterControlRender::CharacterImageLibrary::AddImageLibrary(FilePathRef Path)
 {
-	AddImageLibrary(Path, "");
+	AddImageLibrary(Path, u8"");
 }
 
 void CharacterControlRender::CharacterImageLibrary::AddImageLibrary(FilePathRef Path, StrIdRef OverrideName)
@@ -519,13 +516,13 @@ void CharacterControlRender::CharacterImageLibrary::AddImageLibrary(FilePathRef 
 	LoadedImageLibraries[Path] = Ptr;
 }
 
-std::vector<std::string> CharacterControlRender::CharacterImageLibrary::GetValidImageNames() const
+std::vector<StrId> CharacterControlRender::CharacterImageLibrary::GetValidImageNames() const
 {
-	std::vector<std::string> List;
+	std::vector<StrId> List;
 
 	for(const auto& ImageLibrary : ImageLibraries)
 	{
-		const std::vector<std::string>& Names = ImageLibrary->GetImageNames();
+		const std::vector<StrId>& Names = ImageLibrary->GetImageNames();
 		List.insert(List.end(), Names.begin(), Names.end());
 	}
 

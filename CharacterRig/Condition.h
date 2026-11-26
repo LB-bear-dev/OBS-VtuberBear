@@ -34,17 +34,18 @@ enum class TextOperator : uint8_t
 };
 
 // One simple condition based on a single attribute. X == Y, Name contains "airplane"
-template <typename T, typename OperatorType>
+template<typename T, typename OperatorType>
 struct Comparison
 {
 	// Which kind of basic logical operator is it?
-	OperatorType Op {};
+	OperatorType Op{};
+
+	// What are we comparing the incoming attribute to?
+	T Value{};
 
 	// What attribute are we comparing
 	StrId Attribute;
 
-	// What are we comparing the incoming attribute to?
-	T Value {};
 
 	bool Evaluate(const AttributeMap& Attributes) const;
 
@@ -79,34 +80,34 @@ struct Condition
 
 
 // Custom serialization for enum values
-template <>
+template<>
 struct glz::meta<CharacterControlOBS::BoolOperator>
 {
 	using enum CharacterControlOBS::BoolOperator;
-	static constexpr std::array<std::string_view, 2> keys {"eq", "ne"};
-	static constexpr std::array value {Equal, NotEqual};
+	static constexpr std::array<std::string_view, 2> keys{"eq", "ne"};
+	static constexpr std::array value{Equal, NotEqual};
 };
 
-template <>
+template<>
 struct glz::meta<CharacterControlOBS::NumberOperator>
 {
 	using enum CharacterControlOBS::NumberOperator;
-	static constexpr std::array<std::string_view, 6> keys {"eq", "ne", "lt", "gt", "le", "ge"};
-	static constexpr std::array value {Equal, NotEqual, Less, Greater, LessEqual, GreaterEqual};
+	static constexpr std::array<std::string_view, 6> keys{"eq", "ne", "lt", "gt", "le", "ge"};
+	static constexpr std::array value{Equal, NotEqual, Less, Greater, LessEqual, GreaterEqual};
 };
 
-template <>
+template<>
 struct glz::meta<CharacterControlOBS::TextOperator>
 {
 	using enum CharacterControlOBS::TextOperator;
-	static constexpr std::array<std::string_view, 3> keys {"eq", "ne", "contains"};
-	static constexpr std::array value {Equal, NotEqual, Contains};
+	static constexpr std::array<std::string_view, 3> keys{"eq", "ne", "contains"};
+	static constexpr std::array value{Equal, NotEqual, Contains};
 };
 
-template <>
+template<>
 struct glz::meta<CharacterControlOBS::Condition::Operator>
 {
 	using enum CharacterControlOBS::Condition::Operator;
-	static constexpr std::array<std::string_view, 2> keys {"all", "any"};
-	static constexpr std::array value {All, Any};
+	static constexpr std::array<std::string_view, 2> keys{"all", "any"};
+	static constexpr std::array value{All, Any};
 };

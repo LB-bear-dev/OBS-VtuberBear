@@ -23,10 +23,10 @@ bool Compare(const double Current, const double Expected, const NumberOperator O
 {
 	switch(Op)
 	{
-		case NumberOperator::Equal :
-			return Current == Expected;
+		case NumberOperator::Equal : // Allowing direct comparison to float here as we've only got 1 number type
+			return Current == Expected; // NOLINT(clang-diagnostic-float-equal)
 		case NumberOperator::NotEqual :
-			return Current != Expected;
+			return Current != Expected; // NOLINT(clang-diagnostic-float-equal)
 		case NumberOperator::Less :
 			return Current < Expected;
 		case NumberOperator::Greater :
@@ -55,7 +55,7 @@ bool Compare(const Str& Current, const Str& Expected, const TextOperator Op)
 	return false;
 }
 
-template <typename T>
+template<typename T>
 bool AllTrue(const std::vector<T>& Children, const AttributeMap& Attributes)
 {
 	return std::ranges::all_of(Children,
@@ -65,7 +65,7 @@ bool AllTrue(const std::vector<T>& Children, const AttributeMap& Attributes)
 		});
 }
 
-template <typename T>
+template<typename T>
 bool AnyTrue(const std::vector<T>& Children, const AttributeMap& Attributes)
 {
 	return std::ranges::any_of(Children,
@@ -76,7 +76,7 @@ bool AnyTrue(const std::vector<T>& Children, const AttributeMap& Attributes)
 }
 }
 
-template <typename T, typename OperatorType>
+template<typename T, typename OperatorType>
 bool Comparison<T, OperatorType>::Evaluate(const AttributeMap& Attributes) const
 {
 	if(const auto Found = Attributes.find(Attribute); Found != Attributes.end() && Found->second != nullptr)

@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <vector>
 
-std::optional<FilePath> CharacterControlOBS::ResolveInsideFolder(FilePathRef Folder, Utf8StrRef Path)
+std::optional<FilePath> CharacterControlOBS::ResolveInsideFolder(FilePathRef Folder, StrRef Path)
 {
 	const FilePath Relative = FilePath(std::u8string(Path.begin(), Path.end())).lexically_normal();
 
@@ -16,7 +16,7 @@ std::optional<FilePath> CharacterControlOBS::ResolveInsideFolder(FilePathRef Fol
 	return Folder / Relative;
 }
 
-Utf8Str CharacterControlOBS::LogPath(FilePathRef Path)
+Str CharacterControlOBS::LogPath(FilePathRef Path)
 {
 	const std::u8string Utf8 = Path.u8string();
 	return {Utf8.begin(), Utf8.end()};
@@ -32,7 +32,7 @@ FilePath CharacterControlOBS::CharactersFolder(FilePathRef Root)
 	return Root / "Characters";
 }
 
-std::optional<FilePath> CharacterControlOBS::CharacterFolder(FilePathRef Root, StrIdRef Name)
+std::optional<FilePath> CharacterControlOBS::CharacterFolder(FilePathRef Root, StrRef Name)
 {
 	return ResolveInsideFolder(CharactersFolder(Root), Name);
 }
@@ -53,9 +53,9 @@ bool CharacterControlOBS::HasCharacterFile(FilePathRef Folder)
 	return is_regular_file(CharacterFilePath(Folder), Error);
 }
 
-std::optional<FilePath> CharacterControlOBS::FindRig(FilePathRef Root, StrIdRef CharacterName, StrIdRef RigName)
+std::optional<FilePath> CharacterControlOBS::FindRigPath(FilePathRef Root, StrRef CharacterName, StrRef RigName)
 {
-	const Utf8Str FileName = RigName + ".Json";
+	const Str FileName = RigName + u8".Json";
 
 	std::vector<FilePath> SearchFolders;
 	if(const std::optional<FilePath> Character = CharacterFolder(Root, CharacterName))
@@ -65,12 +65,12 @@ std::optional<FilePath> CharacterControlOBS::FindRig(FilePathRef Root, StrIdRef 
 
 	SearchFolders.push_back(RigsFolder(Root));
 
-	for(const FilePath& Folder : SearchFolders)
+	for(FilePathRef Folder : SearchFolders)
 	{
 		const std::optional<FilePath> Path = ResolveInsideFolder(Folder, FileName);
 		if(std::error_code Error; Path && is_regular_file(*Path, Error))
 		{
-			return Path;
+			return Path->lexically_normal();
 		}
 	}
 

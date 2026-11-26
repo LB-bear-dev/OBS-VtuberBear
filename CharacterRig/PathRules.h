@@ -5,18 +5,18 @@
 
 namespace CharacterControlOBS
 {
-inline constexpr auto DefaultCharacterName = "default";
+inline constexpr auto DefaultCharacterName = u8"default";
 
 // gets a filename from a path that is relative to a folder
-std::optional<FilePath> ResolveInsideFolder(FilePathRef Folder, Utf8StrRef Path);
+std::optional<FilePath> ResolveInsideFolder(FilePathRef Folder, StrRef Path);
 
-Utf8Str LogPath(FilePathRef Path);
+Str LogPath(FilePathRef Path);
 
 FilePath RigsFolder(FilePathRef Root);
 
 FilePath CharactersFolder(FilePathRef Root);
 
-std::optional<FilePath> CharacterFolder(FilePathRef Root, StrIdRef Name);
+std::optional<FilePath> CharacterFolder(FilePathRef Root, StrRef Name);
 
 FilePath DefaultCharacterFolder(FilePathRef Root);
 
@@ -24,5 +24,5 @@ FilePath CharacterFilePath(FilePathRef Folder);
 
 bool HasCharacterFile(FilePathRef Folder);
 
-std::optional<FilePath> FindRig(FilePathRef Root, StrIdRef CharacterName, StrIdRef RigName);
+std::optional<FilePath> FindRigPath(FilePathRef Root, StrRef CharacterName, StrRef RigName);
 }

@@ -62,7 +62,7 @@ class CharacterImageLibrary
 public:
 	void AddImageLibrary(FilePathRef Path);
 	void AddImageLibrary(FilePathRef Path, StrIdRef OverrideName);
-	std::vector<std::string> GetValidImageNames() const;
+	std::vector<StrId> GetValidImageNames() const;
 	gs_image_file_ex* GetImageFromName(StrIdRef Name) const;
 	const FileImageLibrary* GetLayers(FilePathRef Path) const;
 

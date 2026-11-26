@@ -17,13 +17,13 @@ void CharacterControlOBS::SetAttribute(const AttributeMap& Map, StrIdRef Name, c
 
 	if(!Found->second->Set(Value))
 	{
-		ERROR_("Cannot set attribute \"%s\" of type %s to %s.", Name.c_str(), Found->second->GetTypeName(), Attribute::GetTypeName(Value));
+		ERROR_("Cannot set attribute \"%s\" of type %s to %s.", reinterpret_cast<const char*>(Name.c_str()), Found->second->GetTypeName(), Attribute::GetTypeName(Value));
 	}
 }
 
 Character::Character()
 {
-	ImageRoot.CreateChildLayer("default");
+	ImageRoot.CreateChildLayer(u8"default");
 }
 
 void Character::AddComponent(std::unique_ptr<Component>&& NewComponent)

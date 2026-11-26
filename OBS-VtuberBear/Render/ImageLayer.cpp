@@ -15,7 +15,7 @@ void ImageLayer::CreateChildLayer(StrIdRef Layer)
 
 void ImageLayer::CreateSlot(StrIdRef Slot)
 {
-	SlotNames.push_back({.Slot = Slot, .Name = ""});
+	SlotNames.push_back({.Slot = Slot, .Name = u8""});
 	for(ImageLayer& Layer : ChildLayersByZOrder)
 	{
 		Layer.CreateSlot(Slot);
@@ -217,17 +217,19 @@ void ImageLayer::RefreshActiveImageFromSlots()
 {
 	ActiveImageName.clear();
 
-	for(const std::string& ImageName : ImageLibraries.GetValidImageNames())
+	for(StrIdRef ImageName : ImageLibraries.GetValidImageNames())
 	{
-		const bool MatchesAllSlots = std::ranges::all_of(SlotNames,
-			[&ImageName](const SlotName& SlotEntry)
-			{
-				return ImageName.find(SlotEntry.Name) != std::string::npos;
-			});
-
-		if(MatchesAllSlots)
+		for(const auto& [Slot, Name] : SlotNames)
 		{
-			ActiveImageName = ImageName;
+			if(!Name.empty() && ImageName.find(Name) != StrId::npos)
+			{
+				ActiveImageName = ImageName;
+				break;
+			}
+		}
+
+		if(!ActiveImageName.empty())
+		{
 			break;
 		}
 	}
