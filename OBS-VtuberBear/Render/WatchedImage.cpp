@@ -1,4 +1,5 @@
 // Copyright (C) 2026 LB-bear-dev <lb_burr@outlook.com>
+// ReSharper disable CppUnusedIncludeDirective
 #include "PCH.h"
 #include "Render/WatchedImage.h"
 
@@ -16,10 +17,25 @@
 #endif
 #include <Windows.h>
 
+#include "Psd/Psd.h"
+#include "Psd/PsdPlatform.h"
+#include "Psd/PsdChannel.h"
+#include "Psd/PsdChannelType.h"
+#include "Psd/PsdColorMode.h"
+#include "Psd/PsdDocument.h"
+#include "Psd/PsdInterleave.h"
 #include "Psd/PsdLayer.h"
+#include "Psd/PsdLayerCanvasCopy.h"
+#include "Psd/PsdLayerMask.h"
+#include "Psd/PsdLayerMaskSection.h"
+#include "Psd/PsdLayerType.h"
+#include "Psd/PsdMallocAllocator.h"
+#include "Psd/PsdNativeFile.h"
 #include "Psd/PsdParseDocument.h"
 #include "Psd/PsdParseLayerMaskSection.h"
+#include "Psd/PsdSyncFileReader.h"
 #include "Psd/PsdSyncFileUtil.h"
+#include "Psd/PsdVectorMask.h"
 
 std::unordered_map<FilePath, std::weak_ptr<CharacterControlRender::WatchedFileImageLibrary>> CharacterControlRender::CharacterImageLibrary::LoadedImageLibraries;
 namespace
