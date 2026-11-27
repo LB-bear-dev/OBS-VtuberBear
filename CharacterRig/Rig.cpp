@@ -58,3 +58,32 @@ bool Rig::Save(FilePathRef Path) const
 
 	return true;
 }
+
+SlotValues Rig::EvaluateSlots(const AttributeMap& Attributes) const
+{
+	SlotValues EvaluatedSlots;
+
+	for(const RigSlot& Slot : Slots)
+	{
+		if(EvaluatedSlots.contains(Slot.Name))
+		{
+			continue;
+		}
+
+		for(const auto& [ConditionValue, SlotCondition] : Slot.Rules)
+		{
+			if(SlotCondition.Evaluate(Attributes))
+			{
+				EvaluatedSlots.emplace(Slot.Name, ConditionValue);
+				break;
+			}
+		}
+
+		if(!Slot.Default.empty())
+		{
+			EvaluatedSlots.try_emplace(Slot.Name, Slot.Default);
+		}
+	}
+
+	return EvaluatedSlots;
+}

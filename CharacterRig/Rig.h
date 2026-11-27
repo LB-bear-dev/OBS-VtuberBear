@@ -1,11 +1,15 @@
 // Copyright (C) 2026 LB-bear-dev <lb_burr@outlook.com>
 #pragma once
+#include <map>
 #include <vector>
 #include "CharacterControlCore/CoreTypes.h"
+#include "CharacterRig/Attribute.h"
 #include "CharacterRig/Condition.h"
 
 namespace CharacterControlOBS
 {
+using SlotValues = std::map<StrId, StrId>;
+
 struct RigLayer
 {
 	// Identifier for the layer, mostly to help UI
@@ -14,8 +18,8 @@ struct RigLayer
 	// If any, should this layer be relative to any other layer?
 	StrId Parent;
 
-	// Which slots are applicable to this layer?
-	std::vector<StrId> Slots;
+	// Which slot this layer is driven by
+	StrId Slot;
 
 	bool operator==(const RigLayer&) const = default;
 };
@@ -26,7 +30,7 @@ struct SlotRule
 	StrId Value;
 
 	// What needs to be true to set this value
-	Condition When;
+	Condition SlotCondition;
 
 	bool operator==(const SlotRule&) const = default;
 };
@@ -36,11 +40,11 @@ struct RigSlot
 	// Identifies what this slot is meant to switch between
 	StrId Name;
 
-	// The different states this slot can be in
-	std::vector<StrId> Values;
-
 	// Logic that describes how this slot changes between different values.
 	std::vector<SlotRule> Rules;
+
+	// If the rules fall through, this is what this slot will end up with
+	StrId Default;
 
 	bool operator==(const RigSlot&) const = default;
 };
@@ -61,8 +65,11 @@ struct Rig
 	// If the file is totally unusable it will return a blank rig with no layers or slots
 	static Rig Load(FilePathRef Path);
 
-	// Saves the rig file to disk with 
+	// Saves the rig file to disk
 	bool Save(FilePathRef Path) const;
+
+	// Figure out which slots should be set on which layers, based on the attributes this rig has set on it
+	SlotValues EvaluateSlots(const AttributeMap& Attributes) const;
 
 	bool operator==(const Rig&) const = default;
 };
