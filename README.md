@@ -16,12 +16,11 @@ This means characters do not require many system resources, resulting in a less 
 
 Prerequisite installs:
 - git on your PATH
-- A build of [OBS Studio](https://github.com/obsproject/obs-studio) at the release in `ObsVersion` in `Directory.Build.props` (see [Building OBS Studio](https://github.com/obsproject/obs-studio/wiki/Build-Instructions-For-Windows)). Only `libobs` is needed.
-- Clone the repo
+- A build of [OBS Studio](https://github.com/obsproject/obs-studio) at the release in `ObsVersion` in `Directory.Build.props` 
 
 ### Pointing the build at OBS
 
-Create `BearApps.user.props` in the repo root (it is not checked in) with the path to your OBS build:
+Edit `BearApps.user.props` in the repo root:
 
 ```xml
 <Project>
@@ -32,24 +31,21 @@ Create `BearApps.user.props` in the repo root (it is not checked in) with the pa
   </PropertyGroup>
 </Project>
 ```
-### Setting the rest up
 
-Run `msbuild Setup.proj` from the repo root (a Developer PowerShell for VS has msbuild on its PATH). It:
-- Grabs git submodules (Box2D, googletest)
-- Checks that `OBSPATH` points at an OBS build
-
-Open `OBS-VtuberBear.sln` in your IDE of choice, build and run.
+Run `msbuild Setup.proj`
 
 ### Copying builds into OBS
 
-Builds copy the plugin into OBS's plugin folder, in the layout OBS now requires (`<plugins>\OBS-VtuberBear\OBS-VtuberBear.dll`, see [Legacy plugin locations](https://obsproject.com/kb/legacy-plugin-locations)). By default that is the `plugins` folder in the `rundir` of the OBS build in `OBSPATH`, used only if it exists. To use an installed OBS instead, add this to `BearApps.user.props`; the folder is created if it is missing:
+Builds copy the plugin into OBS's plugin folder. By default that is the `plugins` folder in the `rundir` of the OBS build in `OBSPATH`, used only if it exists. You can manually override where this copies to with
 
 ```xml
 <OBSPLUGINS>C:\ProgramData\obs-studio\plugins</OBSPLUGINS>
 ```
 
+In your BearApps.user.props
+
 Pass `/p:DeployToOBS=false` to skip the copy.
 
 ### Updating OBS
 
-The supported OBS version is `ObsVersion` in `Directory.Build.props`, which CI reads too. To move to a different release, change it, build that release of OBS and point `OBSPATH` at it. CI builds libobs at `ObsVersion` itself. Commit the change, then install the matching OBS Studio so the plugin loads.
+The supported OBS version is `ObsVersion` in `Directory.Build.props`. To move to a different release, change it, build that release of OBS and point `OBSPATH` at it. CI builds the obs from that version number as well.
