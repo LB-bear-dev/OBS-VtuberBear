@@ -2,6 +2,7 @@
 #include "PCH.h"
 #include <obs-module.h>
 #include "plugin-macros.h"
+#include "Editor/CharacterEditor.h"
 
 OBS_DECLARE_MODULE()
 
@@ -12,11 +13,15 @@ bool obs_module_load()
 {
 	blog(LOG_INFO, "plugin loaded successfully (version %s)", PLUGIN_VERSION);
 
+	CharacterControlEditor::RegisterCharacterEditor();
+
 	return true;
 }
 
 // ReSharper disable once CppInconsistentNaming
 void obs_module_unload()
 {
+	CharacterControlEditor::UnregisterCharacterEditor();
+
 	blog(LOG_INFO, "plugin unloaded");
 }

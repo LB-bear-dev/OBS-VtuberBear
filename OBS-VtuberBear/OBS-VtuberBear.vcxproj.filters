@@ -10,6 +10,9 @@
     <Filter Include="CharacterControlCore">
       <UniqueIdentifier>{212eb33e-f62c-5f5f-97e1-2d8131899cd0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Editor">
+      <UniqueIdentifier>{6b0f3a52-9d1e-4c7a-8f25-3e4d7c1b9a60}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PCH.cpp"/>
@@ -25,6 +28,12 @@
     </ClCompile>
     <ClCompile Include="Render\WatchedImage.cpp">
       <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor\CharacterEditor.cpp">
+      <Filter>Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor\CharacterEditorWindow.cpp">
+      <Filter>Editor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -44,6 +53,12 @@
     </ClInclude>
     <ClInclude Include="Render\WatchedImage.h">
       <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\CharacterEditor.h">
+      <Filter>Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\CharacterEditorWindow.h">
+      <Filter>Editor</Filter>
     </ClInclude>
     <ClInclude Include="..\CharacterControlCore\CoreTypes.h">
       <Filter>CharacterControlCore</Filter>
